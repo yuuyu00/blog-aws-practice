@@ -1,5 +1,5 @@
 {
-  "name": "@apollo-cloudflare-react/backend",
+  "name": "@blog-aws-practice/server",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -20,13 +20,13 @@
     "insert-seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seeds.ts",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "d1:migrations:create": "wrangler d1 migrations create apollo-cloudflare-db",
-    "d1:migrations:list": "wrangler d1 migrations list apollo-cloudflare-db --local",
-    "d1:migrations:list:remote": "wrangler d1 migrations list apollo-cloudflare-db --remote",
-    "d1:migrations:apply": "wrangler d1 migrations apply apollo-cloudflare-db --local",
-    "d1:migrations:apply:remote": "wrangler d1 migrations apply apollo-cloudflare-db --remote",
-    "d1:execute": "wrangler d1 execute apollo-cloudflare-db --local",
-    "d1:execute:remote": "wrangler d1 execute apollo-cloudflare-db --remote",
+    "d1:migrations:create": "wrangler d1 migrations create blog-aws-practice-db",
+    "d1:migrations:list": "wrangler d1 migrations list blog-aws-practice-db --local",
+    "d1:migrations:list:remote": "wrangler d1 migrations list blog-aws-practice-db --remote",
+    "d1:migrations:apply": "wrangler d1 migrations apply blog-aws-practice-db --local",
+    "d1:migrations:apply:remote": "wrangler d1 migrations apply blog-aws-practice-db --remote",
+    "d1:execute": "wrangler d1 execute blog-aws-practice-db --local",
+    "d1:execute:remote": "wrangler d1 execute blog-aws-practice-db --remote",
     "prisma-studio": "DATABASE_URL=file:../$(find .wrangler/state/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit) prisma studio"
   },
   "dependencies": {

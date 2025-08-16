@@ -1,4 +1,4 @@
-# Apollo Cloudflare React Stack
+# Blog AWS Practice Stack
 
 Cloudflare Workers上で動作するApollo Server、React、Supabase Authを統合したフルスタックアプリケーション
 
@@ -73,9 +73,9 @@ Cloudflare D1 (SQLite)
 ## プロジェクト構成
 
 ```
-apollo-cloudflare-react/
+blog-aws-practice/
 ├── packages/
-│   ├── backend/                 # Cloudflare Workers上のApollo Server
+│   ├── server/                  # Cloudflare Workers上のApollo Server
 │   │   ├── src/
 │   │   │   ├── index.ts        # Workersエントリーポイント
 │   │   │   ├── resolvers/      # GraphQLリゾルバー
@@ -118,7 +118,7 @@ apollo-cloudflare-react/
 
    ```bash
    git clone <repository-url>
-   cd apollo-cloudflare-react
+   cd blog-aws-practice
    ```
 
 2. **依存関係のインストール**
@@ -129,7 +129,7 @@ apollo-cloudflare-react/
 
 3. **環境変数の設定**
 
-   バックエンド (`packages/backend/.dev.vars`):
+   バックエンド (`packages/server/.dev.vars`):
 
    ```
    SUPABASE_URL=your-supabase-url
@@ -139,7 +139,7 @@ apollo-cloudflare-react/
    CORS_ORIGIN=http://localhost:3000
    ```
 
-   バックエンド (`packages/backend/.env`):
+   バックエンド (`packages/server/.env`):
 
    ```
    DATABASE_URL="file:./dev.db"
@@ -150,8 +150,8 @@ apollo-cloudflare-react/
 4. **Cloudflare D1データベースの作成**
 
    ```bash
-   cd packages/backend
-   pnpm wrangler d1 create apollo-cloudflare-db
+   cd packages/server
+   pnpm wrangler d1 create blog-aws-practice-db
    ```
 
    作成されたIDで`wrangler.toml`の`database_id`を更新してください。
@@ -181,7 +181,7 @@ apollo-cloudflare-react/
 pnpm dev
 
 # バックエンドのみ (http://localhost:8787)
-cd packages/backend && pnpm dev
+cd packages/server && pnpm dev
 
 # フロントエンドのみ (http://localhost:3000)
 cd packages/frontend && pnpm dev
@@ -191,13 +191,13 @@ cd packages/frontend && pnpm dev
 
 1. **GraphQLスキーマの変更**
 
-   - `packages/backend/schema/`内の`.gql`ファイルを編集
+   - `packages/server/schema/`内の`.gql`ファイルを編集
    - `pnpm generate`を実行して型を更新
-   - `packages/backend/src/resolvers/`でリゾルバーを実装
+   - `packages/server/src/resolvers/`でリゾルバーを実装
 
 2. **データベーススキーマの変更**
 
-   - `packages/backend/prisma/schema.prisma`を更新
+   - `packages/server/prisma/schema.prisma`を更新
    - マイグレーション作成: `pnpm d1:migrations:create <name>`
    - ローカルに適用: `pnpm d1:migrations:apply`
    - Prismaクライアント生成: `pnpm prisma generate`
@@ -229,7 +229,7 @@ pnpm build
 
 ```bash
 # バックエンドのデプロイ
-cd packages/backend
+cd packages/server
 pnpm deploy:dev    # 開発環境
 pnpm deploy:prod   # 本番環境
 

@@ -1,4 +1,4 @@
-name = "apollo-cloudflare-api"
+name = "blog-aws-practice-api"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 # D1 Database binding
 [[d1_databases]]
 binding = "DB"
-database_name = "apollo-cloudflare-db"
+database_name = "blog-aws-practice-db"
 database_id = "c370ca69-c11d-4d00-9fd0-b7339850fd30" # wrangler d1 create実行後に置き換え
 migrations_dir = "migrations"
 
@@ -19,7 +19,7 @@ ENVIRONMENT = "development"
 
 # 本番環境設定
 [env.production]
-name = "apollo-cloudflare-api-prod"
+name = "blog-aws-practice-api-prod"
 vars = { ENVIRONMENT = "production" }
 
 # 開発サーバー設定
