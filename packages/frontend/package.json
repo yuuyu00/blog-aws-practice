@@ -1,0 +1,62 @@
+{
+  "name": "@apollo-cloudflare-react/frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently 'vite' 'pnpm codegen-watch'",
+    "dev:worker": "wrangler dev --port 3001",
+    "build": "pnpm run generate && tsc && vite build",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "generate": "graphql-codegen",
+    "codegen-watch": "graphql-codegen --watch",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "deploy:dev": "pnpm run clean && pnpm run generate && tsc && vite build --mode staging && wrangler deploy",
+    "deploy:prod": "pnpm run clean && pnpm build && wrangler deploy --env production"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.13.8",
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/client-preset": "^4.8.2",
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.50.0",
+    "@tailwindcss/forms": "^0.5.10",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^14.3.1",
+    "@testing-library/user-event": "^14.6.1",
+    "dayjs": "^1.11.13",
+    "framer-motion": "^12.18.1",
+    "graphql": "^16.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router": "^7.0.2"
+  },
+  "devDependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@parcel/watcher": "^2.5.1",
+    "@tailwindcss/postcss": "^4.1.10",
+    "@tailwindcss/vite": "^4.1.10",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.0",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "@vitejs/plugin-react-swc": "^3.10.2",
+    "autoprefixer": "^10.4.21",
+    "clsx": "^2.1.1",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "fast-url-parser": "^1.1.3",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.8.3",
+    "vite": "^5.4.19"
+  },
+  "volta": {
+    "node": "22.11.0"
+  }
+}

@@ -1,0 +1,15 @@
+# Cloudflare Workers with Static Assets configuration
+name = "apollo-cloudflare-frontend"
+compatibility_date = "2024-11-25"
+
+# Static Assets
+assets = { directory = "./dist", not_found_handling = "single-page-application" }
+
+# 開発サーバー設定
+[dev]
+port = 3001
+local_protocol = "http"
+
+# 本番環境設定
+[env.production]
+name = "apollo-cloudflare-frontend-prod"

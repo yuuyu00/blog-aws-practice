@@ -1,0 +1,62 @@
+{
+  "name": "@apollo-cloudflare-react/backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy:dev": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && pnpm run generate && tsc",
+    "generate": "pnpm run generate:prisma && pnpm run generate:codegen && pnpm run generate:schema",
+    "generate:prisma": "prisma generate",
+    "generate:codegen": "pnpm run generate:codegen:prepare && pnpm run generate:codegen:concat && pnpm run generate:codegen:dts",
+    "generate:codegen:prepare": "rimraf schema/schema.gql",
+    "generate:codegen:concat": "concat -o schema/schema.gql schema/*.gql",
+    "generate:codegen:dts": "graphql-codegen --config codegen.yml",
+    "generate:schema": "node scripts/generate-schema.js",
+    "insert-seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seeds.ts",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "d1:migrations:create": "wrangler d1 migrations create apollo-cloudflare-db",
+    "d1:migrations:list": "wrangler d1 migrations list apollo-cloudflare-db --local",
+    "d1:migrations:list:remote": "wrangler d1 migrations list apollo-cloudflare-db --remote",
+    "d1:migrations:apply": "wrangler d1 migrations apply apollo-cloudflare-db --local",
+    "d1:migrations:apply:remote": "wrangler d1 migrations apply apollo-cloudflare-db --remote",
+    "d1:execute": "wrangler d1 execute apollo-cloudflare-db --local",
+    "d1:execute:remote": "wrangler d1 execute apollo-cloudflare-db --remote",
+    "prisma-studio": "DATABASE_URL=file:../$(find .wrangler/state/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit) prisma studio"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.12.2",
+    "@as-integrations/cloudflare-workers": "^1.1.1",
+    "@graphql-codegen/cli": "^5.0.7",
+    "@prisma/adapter-d1": "^6.9.0",
+    "@prisma/client": "^6.9.0",
+    "graphql": "^16.11.0",
+    "graphql-tag": "^2.12.6",
+    "jose": "^6.0.11",
+    "prisma": "^6.9.0",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250614.0",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-resolvers": "^4.5.1",
+    "@types/node": "15.3.0",
+    "concat": "1.0.3",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "npm-run-all": "4.1.5",
+    "prettier": "^3.1.0",
+    "rimraf": "3.0.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "wrangler": "^4.20.0"
+  },
+  "volta": {
+    "node": "22.11.0"
+  }
+}

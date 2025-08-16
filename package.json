@@ -1,0 +1,33 @@
+{
+  "name": "apollo-cloudflare-react",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "volta": {
+    "node": "22.11.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "generate": "turbo run generate",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "format": "turbo run format",
+    "clean": "rm -rf node_modules .turbo packages/*/node_modules packages/*/dist packages/*/.turbo"
+  },
+  "devDependencies": {
+    "eslint": "^9.29.0",
+    "turbo": "^2.5.4",
+    "update-browserslist-db": "^1.1.3",
+    "zod": "^3.25.64"
+  },
+  "resolutions": {
+    "expo-asset": "8.9.1",
+    "graphql": "16.11.0"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
