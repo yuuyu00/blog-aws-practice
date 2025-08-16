@@ -2,28 +2,33 @@
 
 ## 概要
 
-このドキュメントは、現在Cloudflare Workers上で稼働しているApollo GraphQL ServerをAWS ECS Fargateに移行するための詳細な計画書です。本プロジェクトの主目的は、AWS初心者がAWSインフラ構築を1から実践することで、AWSの深い理解を得ることです。
+このドキュメントは、現在Cloudflare Workers上で稼働しているApollo GraphQL ServerをAWS ECS Fargateに移行するための詳細な計画書です。本プロジェクトの主目的は、AWS初心者がAWSインフラ構築を1から実践することで、AWSの深い理解を得ることです。フロントエンドは引き続きCloudflare Workersにデプロイし、バックエンドのみAWSに移行します。
 
 ## 移行後のアーキテクチャ
 
 ```
 クライアントブラウザ
     │
-    ├─── React SPA (Cloudflare Workers Static Assets) ※変更なし
+    ├─── React SPA (Cloudflare Workers Static Assets)
     │     ・Apollo Client (GraphQL)
     │     ・Supabase Auth Client
     │     ・React Router (SPAルーティング)
+    │     ・デプロイ先: Cloudflare Workers（無料の静的配信）
     │
     │ GraphQLリクエスト (JWT付きヘッダー)
     │ HTTPS経由でALBのドメインにアクセス
     ▼
 Application Load Balancer (ALB)
+    │ ・パブリックエンドポイント
+    │ ・HTTPS終端
+    │ ・ヘルスチェック
     │
     │ ターゲットグループへ転送
     ▼
 ECS Fargate Service
-    │
+    │ ・プライベートサブネット内で実行
     ├─── Apollo Server (Node.js Container)
+    │     ・Express.js上で動作
     │     ・GraphQLスキーマ & リゾルバー
     │     ・Supabase JWT検証
     │     ・Prisma ORM
@@ -31,7 +36,8 @@ ECS Fargate Service
     │ VPC内プライベート通信
     ▼
 Aurora RDS PostgreSQL
-    ・マルチAZ構成
+    ・シングルAZ構成（開発環境）
+    ・db.t4g.small（最小インスタンス）
     ・自動バックアップ
     ・暗号化対応
 
@@ -46,9 +52,14 @@ Aurora RDS PostgreSQL
     │    ・Supabase API Keys
     │    ・その他の機密情報
     │
-    └── Amazon ECR
-         ・Dockerイメージの保存
-         ・バージョン管理
+    ├── Amazon ECR
+    │    ・Dockerイメージの保存
+    │    ・バージョン管理
+    │
+    └── Cloudflare
+         ・Frontend静的アセットの配信
+         ・グローバルCDN
+         ・DDoS保護
 ```
 
 ## プロジェクト名の変更
@@ -150,6 +161,26 @@ Aurora RDS PostgreSQL
    - エンドツーエンドの動作確認
    - パフォーマンステスト
    - セキュリティテスト
+
+### フェーズ5: Frontend Cloudflare Workersデプロイ
+
+1. **環境変数ファイルの設定**
+   - `.env.development`の更新（開発用ALBエンドポイント）
+   - `.env.production`の更新（本番用ALBエンドポイント）
+   - ALBのURLをGraphQLエンドポイントとして設定
+
+2. **CORS設定の確認**
+   - ServerのCORS設定でCloudflare WorkersのURLを許可
+   - 開発・本番それぞれのWorker URLを追加
+
+3. **Cloudflareへのデプロイ**
+   - `pnpm deploy:dev`で開発環境にデプロイ
+   - 動作確認後、`pnpm deploy:prod`で本番環境にデプロイ
+
+4. **最終確認**
+   - Cloudflare Workers → AWS ALB → ECS の通信確認
+   - 認証フローの動作確認
+   - エラーハンドリングの確認
 
 ## 必要なAWSリソース一覧
 
@@ -549,10 +580,17 @@ jobs:
 - [ ] デプロイメントの動作確認
 
 ### フェーズ4
-- [ ] Frontend環境変数の更新
+- [ ] Frontend環境変数の更新（ALBのURL設定）
 - [ ] CORSの設定確認
 - [ ] エンドツーエンドテスト
 - [ ] パフォーマンステスト
+
+### フェーズ5
+- [ ] Frontend .env.developmentの更新
+- [ ] Frontend .env.productionの更新
+- [ ] Cloudflare Workersへのデプロイ（開発）
+- [ ] Cloudflare Workersへのデプロイ（本番）
+- [ ] 最終動作確認
 - [ ] ドキュメントの更新
 
 ## トラブルシューティングガイド

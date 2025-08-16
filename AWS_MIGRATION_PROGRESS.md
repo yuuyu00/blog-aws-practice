@@ -67,6 +67,15 @@
 - [ ] Frontend環境変数の更新（ALBのURLに変更）
 - [ ] CORS設定の確認
 - [ ] エンドツーエンドテスト
+- [ ] パフォーマンステスト
+
+#### フェーズ5: Frontend Cloudflareデプロイ
+- [ ] Frontend .env.developmentの更新（開発用ALBエンドポイント）
+- [ ] Frontend .env.productionの更新（本番用ALBエンドポイント）
+- [ ] ServerのCORS設定でCloudflare WorkersのURLを許可
+- [ ] Cloudflare Workersへのデプロイ（開発）
+- [ ] Cloudflare Workersへのデプロイ（本番）
+- [ ] 最終動作確認
 - [ ] ドキュメントの最終更新
 
 ## 重要な決定事項

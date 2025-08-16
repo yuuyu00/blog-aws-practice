@@ -788,11 +788,45 @@ name = "blog-aws-practice-frontend-prod"
 - `not_found_handling = "single-page-application"`: SPAのルーティングサポート
 - Workerスクリプト（`main`）の指定なし: 静的アセットのみの無料配信
 
+## AWS移行プロジェクト管理
+
+このプロジェクトは現在、AWS ECS Fargateへの移行作業を進めています。
+
+### 重要なドキュメント
+
+- **[AWS_MIGRATION_PLAN.md](./AWS_MIGRATION_PLAN.md)** - AWS移行の詳細計画書
+- **[AWS_MIGRATION_PROGRESS.md](./AWS_MIGRATION_PROGRESS.md)** - 移行作業の進捗管理
+
+### 作業ルール
+
+**AWS移行に関する作業を行った場合は、必ず `AWS_MIGRATION_PROGRESS.md` を更新してください。**
+
+このルールにより：
+- Claude Codeセッションが切り替わっても作業を継続可能
+- チーム内で進捗状況を共有
+- 作業の重複や漏れを防止
+
+更新すべき内容：
+- 完了した作業を「✅ 完了した作業」セクションに移動
+- 新しく開始した作業を「🚧 進行中の作業」に記載
+- 発生した課題や決定事項を記録
+- 最終更新日時を更新
+
 ## 参考リンク
 
+### Cloudflare関連
 - [Cloudflare D1 Docs](https://developers.cloudflare.com/d1/)
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
 - [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
 - [Prisma D1 Adapter](https://www.prisma.io/docs/orm/overview/databases/cloudflare-d1)
 - [Apollo Server Cloudflare](https://www.apollographql.com/docs/apollo-server/deployment/cloudflare-workers)
+
+### AWS関連
+- [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
+- [Aurora PostgreSQL User Guide](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/)
+- [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/)
+- [GitHub Actions for Amazon ECS](https://github.com/aws-actions/amazon-ecs-deploy-task-definition)
+
+### その他
 - [Supabase Auth](https://supabase.com/docs/guides/auth)
+- [Prisma with PostgreSQL](https://www.prisma.io/docs/concepts/database-connectors/postgresql)
