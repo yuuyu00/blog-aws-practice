@@ -1,6 +1,5 @@
+import jwt from "jsonwebtoken";
 import type { Env } from "./types";
-
-let jose: any;
 
 export interface AuthUser {
   sub: string;
@@ -37,15 +36,10 @@ export async function verifyJWT(
   const token = match[1];
 
   try {
-    // 動的インポートでjoseを読み込む
-    if (!jose) {
-      jose = await import("jose");
-    }
-    
     console.log('Verifying JWT...');
     console.log('JWT Secret exists:', !!env.SUPABASE_JWT_SECRET);
-    const secret = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
-    const { payload } = await jose.jwtVerify(token, secret);
+    
+    const payload = jwt.verify(token, env.SUPABASE_JWT_SECRET) as jwt.JwtPayload;
     console.log('JWT payload:', payload);
 
     const user: AuthUser = {
@@ -67,9 +61,9 @@ export async function verifyJWT(
       jwtSecretLength: env.SUPABASE_JWT_SECRET?.length || 0
     });
     
-    if (error?.name === 'JWTExpired') {
+    if (error?.name === 'TokenExpiredError') {
       throw new AuthError("Token has expired");
-    } else if (error?.name === 'JWTInvalid') {
+    } else if (error?.name === 'JsonWebTokenError') {
       throw new AuthError("Token is invalid");
     } else {
       throw new AuthError("Token verification failed");

@@ -32,6 +32,7 @@
     "@graphql-codegen/cli": "^5.0.7",
     "@prisma/client": "^6.9.0",
     "@types/cors": "^2.8.19",
+    "@types/jsonwebtoken": "^9.0.10",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -40,6 +41,7 @@
     "graphql-tag": "^2.12.6",
     "helmet": "^8.1.0",
     "jose": "^6.0.12",
+    "jsonwebtoken": "^9.0.2",
     "prisma": "^6.9.0",
     "typescript": "^5.8.3"
   },
