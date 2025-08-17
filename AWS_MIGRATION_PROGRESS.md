@@ -90,6 +90,28 @@
   - クラスター名: blog-aws-practice-cluster
   - Fargate（サーバーレス）構成
 - [x] AWS手動セットアップガイドの作成（AWS_MANUAL_SETUP_GUIDE.md）
+- [x] Secrets Managerの設定
+  - DATABASE_URL: RDS接続文字列
+  - SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_JWT_SECRET
+- [x] ECSタスク実行ロールとタスクロールの作成
+  - blog-aws-practice-ecs-task-execution-role: タスク起動用
+  - blog-aws-practice-ecs-task-role: ECS Exec用
+- [x] Dockerイメージのビルドとプッシュ
+  - AMD64アーキテクチャ対応
+  - ECRへのプッシュ完了
+- [x] ECSタスク定義の作成
+  - Fargate: 256 CPU, 512 Memory
+  - Secrets Managerとの統合
+- [x] ECSサービスのデプロイ
+  - サービス名: blog-aws-practice-server
+  - ALBとの統合完了
+- [x] 踏み台サーバーの構築
+  - ECSタスクベースの踏み台（blog-aws-practice-bastion）
+  - ポートフォワーディング機能（socat使用）
+  - Session Manager Plugin経由での接続
+- [x] RDSへのマイグレーション適用
+  - Prismaマイグレーション完了
+  - GraphQLエンドポイントの動作確認
 
 ### 🚧 進行中の作業
 
@@ -134,10 +156,9 @@
 
 ## 次のアクション
 
-1. RDSエンドポイントの確認とSecrets Manager設定
-2. Dockerイメージのビルドとプッシュ
-3. ECSタスク定義とサービスの作成
-4. GitHub Actionsワークフローの設定
+1. GitHub Actionsワークフローの作成
+2. GitHub Secretsの設定
+3. CI/CDパイプラインのテスト
 
 ## 課題・懸念事項
 
@@ -151,4 +172,4 @@
 
 ---
 
-最終更新: 2025-08-17 16:45 JST (フェーズ2完了 - AWSインフラ構築完了)
+最終更新: 2025-08-17 20:35 JST (フェーズ2完全完了 - ECSデプロイ・マイグレーション適用完了)
