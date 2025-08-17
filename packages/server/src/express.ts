@@ -89,13 +89,13 @@ async function startServer() {
             };
             
             // デバッグ: 環境変数の存在確認（値は出力しない）
-            if (process.env.NODE_ENV !== 'production') {
-              console.log("Auth env check:", {
-                hasSupabaseUrl: !!process.env.SUPABASE_URL,
-                hasSupabaseAnonKey: !!process.env.SUPABASE_ANON_KEY,
-                hasSupabaseJwtSecret: !!process.env.SUPABASE_JWT_SECRET,
-              });
-            }
+            console.log("Auth env check:", {
+              hasSupabaseUrl: !!process.env.SUPABASE_URL,
+              hasSupabaseAnonKey: !!process.env.SUPABASE_ANON_KEY,
+              hasSupabaseJwtSecret: !!process.env.SUPABASE_JWT_SECRET,
+              supabaseUrlLength: process.env.SUPABASE_URL?.length || 0,
+              supabaseJwtSecretLength: process.env.SUPABASE_JWT_SECRET?.length || 0,
+            });
             
             user = await verifyJWT(`Bearer ${token}`, authEnv);
           } catch (error) {

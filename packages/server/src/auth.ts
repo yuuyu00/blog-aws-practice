@@ -60,6 +60,13 @@ export async function verifyJWT(
 
     return user;
   } catch (error: any) {
+    console.error("JWT verification error:", {
+      errorName: error?.name,
+      errorMessage: error?.message,
+      hasJwtSecret: !!env.SUPABASE_JWT_SECRET,
+      jwtSecretLength: env.SUPABASE_JWT_SECRET?.length || 0
+    });
+    
     if (error?.name === 'JWTExpired') {
       throw new AuthError("Token has expired");
     } else if (error?.name === 'JWTInvalid') {
