@@ -1,0 +1,6 @@
+name = "blog-aws-practice-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-11-25"
+
+[env.production]
+name = "blog-aws-practice-proxy-prod"
