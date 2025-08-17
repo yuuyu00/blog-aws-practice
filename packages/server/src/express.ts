@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import cors from "cors";
 import http from "http";
 import fs from "fs";
@@ -34,10 +34,8 @@ async function startServer() {
   const server = new ApolloServer<GraphQLContext>({
     typeDefs,
     resolvers,
-    introspection: process.env.NODE_ENV !== 'production',
-    plugins: [
-      ApolloServerPluginDrainHttpServer({ httpServer }),
-    ],
+    introspection: process.env.NODE_ENV !== "production",
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   });
 
   await server.start();
@@ -46,12 +44,17 @@ async function startServer() {
     res.json({ status: "healthy", timestamp: new Date().toISOString() });
   });
 
-  app.use(cors({
-    origin: process.env.CORS_ORIGIN ? 
-      process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()) : 
-      ['http://localhost:3000', 'https://blog-aws-practice-frontend.mrcdsamg63.workers.dev'],
-    credentials: true,
-  }));
+  app.use(
+    cors({
+      origin:
+        process.env.CORS_ORIGIN === "*"
+          ? true // true means allow all origins
+          : process.env.CORS_ORIGIN
+            ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+            : ["http://localhost:3000"],
+      credentials: true,
+    })
+  );
   app.use(express.json());
   app.use(
     "/graphql",
@@ -105,15 +108,15 @@ async function startServer() {
   console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
   console.log(`🏥 Health check at http://localhost:${PORT}/health`);
   console.log(`🎮 Apollo Sandbox: http://localhost:${PORT}/graphql`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
 
-  const signals = ['SIGTERM', 'SIGINT'];
-  signals.forEach(signal => {
+  const signals = ["SIGTERM", "SIGINT"];
+  signals.forEach((signal) => {
     process.on(signal, async () => {
       console.log(`\n📴 Received ${signal}, shutting down gracefully...`);
       await server.stop();
       httpServer.close(() => {
-        console.log('💤 Server closed');
+        console.log("💤 Server closed");
         prisma.$disconnect();
         process.exit(0);
       });
@@ -122,6 +125,6 @@ async function startServer() {
 }
 
 startServer().catch((err) => {
-  console.error('❌ Failed to start server:', err);
+  console.error("❌ Failed to start server:", err);
   process.exit(1);
 });
