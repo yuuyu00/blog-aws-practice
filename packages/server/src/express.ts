@@ -44,11 +44,25 @@ async function startServer() {
     res.json({ status: "healthy", timestamp: new Date().toISOString() });
   });
 
-  const allowedOrigins = process.env.CORS_ORIGIN || "https://blog-aws-practice-frontend.mrcdsamg63.workers.dev";
+  const corsOrigins = process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+    : ["https://blog-aws-practice-frontend.mrcdsamg63.workers.dev"];
+  
+  // ローカル開発環境では localhost を追加
+  if (process.env.NODE_ENV !== 'production') {
+    corsOrigins.push('http://localhost:5000', 'http://localhost:3000', 'http://localhost:4000');
+  }
 
   app.use(
     cors({
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        if (!origin || corsOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          console.log('CORS rejected origin:', origin);
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
       methods: ["GET", "POST", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
@@ -73,9 +87,26 @@ async function startServer() {
               SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || "",
               SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET || "",
             };
+            
+            // デバッグ: 環境変数の存在確認（値は出力しない）
+            if (process.env.NODE_ENV !== 'production') {
+              console.log("Auth env check:", {
+                hasSupabaseUrl: !!process.env.SUPABASE_URL,
+                hasSupabaseAnonKey: !!process.env.SUPABASE_ANON_KEY,
+                hasSupabaseJwtSecret: !!process.env.SUPABASE_JWT_SECRET,
+              });
+            }
+            
             user = await verifyJWT(`Bearer ${token}`, authEnv);
           } catch (error) {
             console.error("JWT verification failed:", error);
+            // エラーの詳細をログ出力
+            if (error instanceof Error) {
+              console.error("Error details:", {
+                name: error.name,
+                message: error.message,
+              });
+            }
           }
         }
 
