@@ -1,0 +1,39 @@
+# ========================================
+# 開発環境専用 - PostgreSQLデータベース
+# ========================================
+# 用途: ローカル開発時のデータベースのみを提供
+# 注意: サーバー（Express.js）はホストマシンで直接実行する
+#
+# 使い方:
+#   起動: docker-compose up -d
+#   停止: docker-compose down
+#   ログ: docker-compose logs -f
+#
+# サーバーの起動:
+#   cd packages/server && pnpm dev
+# ========================================
+
+version: '3.8'
+
+services:
+  # 開発環境用のPostgreSQLコンテナ
+  postgres:
+    image: postgres:16-alpine
+    container_name: blog-aws-practice-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: blog_aws_practice
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

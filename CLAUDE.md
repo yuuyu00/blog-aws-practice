@@ -673,6 +673,8 @@ export const updateArticle = async (_parent, { input }, { container, user }) => 
 
 ### コメントの書き方
 
+**厳守事項: 自明なコメントは絶対に書かない**
+
 **避けるべきコメント（自明なコメント）**：
 ```typescript
 // ❌ 悪い例
@@ -681,33 +683,52 @@ if (!user) { // ユーザーが存在しない場合
   throw new Error(); // エラーをスロー
 }
 
-// ❌ 悪い例
+// ❌ 悪い例：コードを見れば分かることをコメントで説明
 // 認証必須
 const authenticatedUser = requireAuth(user);
 
-// ❌ 悪い例
+// ❌ 悪い例：関数名から明らかな動作を説明
 // DIコンテナを作成
 const container = createContainer(prisma);
+
+// ❌ 悪い例：設定値の名前から自明な内容
+// 開発環境ではintrospectionを有効化
+introspection: process.env.NODE_ENV !== 'production'
+
+// ❌ 悪い例：ミドルウェアの一般的な使い方を説明
+// グローバルミドルウェア設定
+app.use(cors())
+
+// ❌ 悪い例：標準的な実装パターンを説明
+// GraphQLエンドポイント
+app.use('/graphql', expressMiddleware(server))
 ```
 
 **良いコメント（理由や意図を説明）**：
 ```typescript
-// ✅ 良い例
+// ✅ 良い例：なぜこの値なのか理由を説明
 // Workerの実行時間制限（30秒）を考慮してタイムアウトを設定
 const TIMEOUT_MS = 25000;
 
-// ✅ 良い例
+// ✅ 良い例：複雑な仕様や落とし穴を説明
 // Supabase JWTのsub claimはauth.users.idと同じ値
 // ただしPrismaのUser.idとは異なるため、User.subで検索する必要がある
 const dbUser = await getUserBySub(authUser.sub);
 
-// ✅ 良い例
+// ✅ 良い例：将来の変更予定や TODO を記載
 /**
  * 記事の更新権限をチェックする
  * - 記事の作成者のみが編集可能
  * - 管理者権限の実装は今後追加予定
  */
 ```
+
+**コメントを書くべき場合**：
+1. **なぜ**その実装を選んだか（他の選択肢があった場合）
+2. **バグ回避**やワークアラウンドの理由
+3. **外部仕様**への依存（API の特殊な挙動など）
+4. **パフォーマンス**や**セキュリティ**の考慮事項
+5. **TODO** や将来の改善点
 
 ### 一般的なコーディング規則
 
@@ -811,6 +832,18 @@ name = "blog-aws-practice-frontend-prod"
 - 新しく開始した作業を「🚧 進行中の作業」に記載
 - 発生した課題や決定事項を記録
 - 最終更新日時を更新
+
+## AWSコンソール操作に関するルール
+
+**重要**: AWSコンソールの操作説明を行う際は、以下のルールに従ってください：
+
+1. **説明は日本語で行う**
+2. **AWSコンソール上の要素（ボタン、メニュー、設定項目など）は英語版の名称を使用する**
+   - 例: 「左側のメニューから「**Your VPCs**」をクリック」
+   - 例: 「「**Create VPC**」ボタンをクリック」
+   - 例: 「**Name tag**に`blog-aws-practice-vpc`を入力」
+
+このルールにより、英語版AWSコンソールを使用しているユーザーが迷わずに操作できます。
 
 ## 参考リンク
 
