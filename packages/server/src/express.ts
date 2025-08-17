@@ -44,15 +44,23 @@ async function startServer() {
     res.json({ status: "healthy", timestamp: new Date().toISOString() });
   });
 
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN === "*"
+      ? true
+      : process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+    : [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://blog-aws-practice-frontend.mrcdsamg63.workers.dev",
+        "https://blog-aws-practice-frontend-prod.mrcdsamg63.workers.dev",
+      ];
+
   app.use(
     cors({
-      origin:
-        process.env.CORS_ORIGIN === "*"
-          ? true // true means allow all origins
-          : process.env.CORS_ORIGIN
-            ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
-            : ["http://localhost:3000"],
+      origin: allowedOrigins,
       credentials: true,
+      methods: ["GET", "POST", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
     })
   );
   app.use(express.json());

@@ -66,8 +66,12 @@ jobs:
 
           # イメージを新しいタグに更新
           NEW_IMAGE="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
-          jq --arg IMAGE "$NEW_IMAGE" \
-            '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)' \
+          CORS_ORIGINS="https://blog-aws-practice-frontend.mrcdsamg63.workers.dev,https://blog-aws-practice-frontend-prod.mrcdsamg63.workers.dev"
+
+          jq --arg IMAGE "$NEW_IMAGE" --arg CORS "$CORS_ORIGINS" \
+            '.containerDefinitions[0].image = $IMAGE |
+             (.containerDefinitions[0].environment[] | select(.name == "CORS_ORIGIN")).value = $CORS |
+             del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)' \
             task-definition.json > new-task-definition.json
 
           # 新しいタスク定義を登録
