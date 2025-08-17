@@ -1,31 +1,39 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
+    // 既存データをクリア
+    await tx.article.deleteMany({});
+    await tx.category.deleteMany({});
+    await tx.user.deleteMany({});
+
     const users = await Promise.all(
       [
         {
+          sub: "auth0|yoshida-123456",
           name: "吉田兼好",
           email: "yoshida@example.com",
         },
         {
+          sub: "auth0|seisho-123456",
           name: "清少納言",
           email: "seisho@example.com",
         },
         {
+          sub: "auth0|kamo-123456",
           name: "鴨長明",
           email: "kamo@example.com",
         },
       ].map(async (user) =>
-        prisma.user.create({
+        tx.user.create({
           data: { ...user },
         })
       )
     );
 
-    await Promise.all(
+    const categories = await Promise.all(
       [
         {
           name: "随筆",
@@ -37,7 +45,7 @@ async function main() {
         {
           name: "歌物語",
         },
-      ].map((category) => prisma.category.create({ data: category }))
+      ].map((category) => tx.category.create({ data: category }))
     );
 
     const articles = [
@@ -106,12 +114,12 @@ async function main() {
 
     await Promise.all(
       articles.map((article, index) =>
-        prisma.article.create({
+        tx.article.create({
           data: {
             ...article,
             categories: {
               connect: {
-                id: Math.floor(index / 3) + 1,
+                id: categories[Math.floor(index / 3)].id,
               },
             },
           },
@@ -119,6 +127,16 @@ async function main() {
       )
     );
   });
+
+  console.log("✅ Seed data inserted successfully");
 }
 
-main().finally(() => prisma.$disconnect());
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error("❌ Error seeding data:", e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

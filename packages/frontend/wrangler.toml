@@ -1,5 +1,5 @@
 # Cloudflare Workers with Static Assets configuration
-name = "apollo-cloudflare-frontend"
+name = "blog-aws-practice-frontend"
 compatibility_date = "2024-11-25"
 
 # Static Assets
@@ -12,4 +12,4 @@ local_protocol = "http"
 
 # 本番環境設定
 [env.production]
-name = "apollo-cloudflare-frontend-prod"
+name = "blog-aws-practice-frontend-prod"

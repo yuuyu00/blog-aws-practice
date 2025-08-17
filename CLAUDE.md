@@ -1,4 +1,4 @@
-# Apollo Cloudflare React Stack - プロジェクト情報
+# Blog AWS Practice Stack - プロジェクト情報
 
 このドキュメントは、プロジェクトの構成、開発手順、よく使うコマンドをまとめたものです。
 
@@ -16,9 +16,9 @@
 ## ディレクトリ構成
 
 ```
-apollo-cloudflare-react/
+blog-aws-practice/
 ├── packages/
-│   ├── backend/          # Apollo Server (Cloudflare Workers)
+│   ├── server/           # Apollo Server (Cloudflare Workers)
 │   │   ├── src/
 │   │   │   ├── index.ts         # Cloudflare Workersエントリーポイント
 │   │   │   ├── schema.ts        # GraphQLスキーマ（自動生成）
@@ -72,14 +72,14 @@ pnpm install
 **Backend (.env)**
 
 ```bash
-# packages/backend/.env
+# packages/server/.env
 DATABASE_URL="file:./dev.db"  # Prisma CLI用のダミーURL
 ```
 
 **Backend (.dev.vars)**
 
 ```bash
-# packages/backend/.dev.vars
+# packages/server/.dev.vars
 SUPABASE_URL=your-supabase-url
 SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_JWT_SECRET=your-supabase-jwt-secret
@@ -110,7 +110,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```bash
 # packages/frontend/.env.development
 # 開発環境デプロイ用（pnpm deploy:dev）
-VITE_GRAPHQL_ENDPOINT=https://apollo-cloudflare-api.your-subdomain.workers.dev/graphql
+VITE_GRAPHQL_ENDPOINT=https://blog-aws-practice-api.your-subdomain.workers.dev/graphql
 VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
@@ -120,7 +120,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```bash
 # packages/frontend/.env.production
 # 本番環境デプロイ用（pnpm deploy:prod）
-VITE_GRAPHQL_ENDPOINT=https://apollo-cloudflare-api-prod.your-subdomain.workers.dev/graphql
+VITE_GRAPHQL_ENDPOINT=https://blog-aws-practice-api-prod.your-subdomain.workers.dev/graphql
 VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
@@ -138,8 +138,8 @@ VITE_GRAPHQL_ENDPOINT=http://localhost:8787/graphql
 
 ```bash
 # D1データベースの作成（初回のみ）
-cd packages/backend
-pnpm wrangler d1 create apollo-cloudflare-db
+cd packages/server
+pnpm wrangler d1 create blog-aws-practice-db
 
 # wrangler.tomlのdatabase_idを更新（作成時に表示されたIDを使用）
 # database_id = "c370ca69-c11d-4d00-9fd0-b7339850fd30"
@@ -166,7 +166,7 @@ pnpm d1:execute:remote --command "SELECT name FROM sqlite_master WHERE type='tab
 pnpm dev
 
 # Backend (Cloudflare Workers) のみ起動
-cd packages/backend && pnpm dev
+cd packages/server && pnpm dev
 
 # Frontend のみ起動
 cd packages/frontend && pnpm dev
@@ -198,7 +198,7 @@ pnpm format
 pnpm generate
 
 # Backend の生成処理
-cd packages/backend
+cd packages/server
 pnpm generate  # 以下を実行:
 # 1. pnpm generate:prisma    - Prismaクライアント生成
 # 2. pnpm generate:codegen   - GraphQL型定義生成
@@ -214,7 +214,7 @@ pnpm generate  # GraphQLクライアントコード生成
 ### データベース操作
 
 ```bash
-cd packages/backend
+cd packages/server
 
 # Prismaスキーマからクライアント生成
 pnpm prisma generate
@@ -237,7 +237,7 @@ pnpm d1:execute:remote --file ./migrations/0001_init.sql    # リモートでフ
 pnpm d1:execute:remote --command "SELECT * FROM User;"      # リモートでコマンド実行
 
 # データベース情報の確認
-pnpm wrangler d1 info apollo-cloudflare-db
+pnpm wrangler d1 info blog-aws-practice-db
 ```
 
 ### D1ローカルデータベースの確認方法
@@ -247,7 +247,7 @@ Prisma StudioはD1を直接サポートしていませんが、以下の方法�
 #### 1. Wrangler D1コマンド（推奨）
 
 ```bash
-cd packages/backend
+cd packages/server
 
 # 便利なスクリプトでデータ確認
 pnpm d1:show:users      # ユーザー一覧
@@ -289,7 +289,7 @@ SELECT * FROM User;  # データ確認
 D1データベースでもPrisma Studioが使用できます：
 
 ```bash
-cd packages/backend
+cd packages/server
 
 # Prisma Studioを起動
 pnpm prisma-studio
@@ -306,7 +306,7 @@ pnpm prisma-studio
 #### Backend (Apollo Server)
 
 ```bash
-cd packages/backend
+cd packages/server
 
 # ローカル開発サーバー（http://localhost:8787）
 pnpm dev  # または pnpm wrangler dev
@@ -342,8 +342,8 @@ pnpm deploy:dev   # .env.developmentを使用してビルド
 pnpm deploy:prod  # .env.productionを使用してビルド
 
 # デプロイURL
-# 開発: https://apollo-cloudflare-frontend.your-subdomain.workers.dev
-# 本番: https://apollo-cloudflare-frontend-prod.your-subdomain.workers.dev
+# 開発: https://blog-aws-practice-frontend.your-subdomain.workers.dev
+# 本番: https://blog-aws-practice-frontend-prod.your-subdomain.workers.dev
 ```
 
 ## Wrangler v4 対応について
@@ -399,8 +399,8 @@ pnpm dev                # turbo run dev
 pnpm generate           # turbo run generate
 
 # 特定パッケージのタスクを実行
-pnpm --filter @apollo-cloudflare-react/backend build
-pnpm --filter @apollo-cloudflare-react/frontend dev
+pnpm --filter @blog-aws-practice/server build
+pnpm --filter @blog-aws-practice/frontend dev
 
 # Turborepoのキャッシュをクリア
 rm -rf .turbo packages/*/.turbo
@@ -561,17 +561,17 @@ function ArticleManager() {
 ### pnpm generateでエラーが出る場合
 
 1. Node.jsバージョンが22.11.0であることを確認
-2. `packages/backend/.env`に`DATABASE_URL="file:./dev.db"`が設定されているか確認
+2. `packages/server/.env`に`DATABASE_URL="file:./dev.db"`が設定されているか確認
 3. `pnpm prisma generate`を先に実行
 
 ### D1マイグレーションが失敗する場合
 
 ```bash
 # テーブルの存在確認
-pnpm wrangler d1 execute apollo-cloudflare-db --command "SELECT name FROM sqlite_master WHERE type='table';"
+pnpm wrangler d1 execute blog-aws-practice-db --command "SELECT name FROM sqlite_master WHERE type='table';"
 
 # 既存のテーブルを削除して再実行
-pnpm wrangler d1 execute apollo-cloudflare-db --command "DROP TABLE IF EXISTS User, Article, Category, _ArticleToCategory;"
+pnpm wrangler d1 execute blog-aws-practice-db --command "DROP TABLE IF EXISTS User, Article, Category, _ArticleToCategory;"
 ```
 
 ### D1コマンドで対象環境を明確に指定する
@@ -591,7 +591,7 @@ pnpm d1:migrations:apply:remote  # リモート本番（--remote）
 
 ```bash
 # 生成ファイルのクリーンアップ
-rm -rf packages/backend/src/gqlTypes.ts
+rm -rf packages/server/src/gqlTypes.ts
 rm -rf packages/frontend/src/generated-graphql
 
 # 再生成
@@ -673,6 +673,8 @@ export const updateArticle = async (_parent, { input }, { container, user }) => 
 
 ### コメントの書き方
 
+**厳守事項: 自明なコメントは絶対に書かない**
+
 **避けるべきコメント（自明なコメント）**：
 ```typescript
 // ❌ 悪い例
@@ -681,33 +683,52 @@ if (!user) { // ユーザーが存在しない場合
   throw new Error(); // エラーをスロー
 }
 
-// ❌ 悪い例
+// ❌ 悪い例：コードを見れば分かることをコメントで説明
 // 認証必須
 const authenticatedUser = requireAuth(user);
 
-// ❌ 悪い例
+// ❌ 悪い例：関数名から明らかな動作を説明
 // DIコンテナを作成
 const container = createContainer(prisma);
+
+// ❌ 悪い例：設定値の名前から自明な内容
+// 開発環境ではintrospectionを有効化
+introspection: process.env.NODE_ENV !== 'production'
+
+// ❌ 悪い例：ミドルウェアの一般的な使い方を説明
+// グローバルミドルウェア設定
+app.use(cors())
+
+// ❌ 悪い例：標準的な実装パターンを説明
+// GraphQLエンドポイント
+app.use('/graphql', expressMiddleware(server))
 ```
 
 **良いコメント（理由や意図を説明）**：
 ```typescript
-// ✅ 良い例
+// ✅ 良い例：なぜこの値なのか理由を説明
 // Workerの実行時間制限（30秒）を考慮してタイムアウトを設定
 const TIMEOUT_MS = 25000;
 
-// ✅ 良い例
+// ✅ 良い例：複雑な仕様や落とし穴を説明
 // Supabase JWTのsub claimはauth.users.idと同じ値
 // ただしPrismaのUser.idとは異なるため、User.subで検索する必要がある
 const dbUser = await getUserBySub(authUser.sub);
 
-// ✅ 良い例
+// ✅ 良い例：将来の変更予定や TODO を記載
 /**
  * 記事の更新権限をチェックする
  * - 記事の作成者のみが編集可能
  * - 管理者権限の実装は今後追加予定
  */
 ```
+
+**コメントを書くべき場合**：
+1. **なぜ**その実装を選んだか（他の選択肢があった場合）
+2. **バグ回避**やワークアラウンドの理由
+3. **外部仕様**への依存（API の特殊な挙動など）
+4. **パフォーマンス**や**セキュリティ**の考慮事項
+5. **TODO** や将来の改善点
 
 ### 一般的なコーディング規則
 
@@ -731,7 +752,7 @@ const dbUser = await getUserBySub(authUser.sub);
 
 1. **機能開発**
 
-   - GraphQLスキーマの更新（`packages/backend/schema/*.gql`）
+   - GraphQLスキーマの更新（`packages/server/schema/*.gql`）
    - `pnpm generate`で型定義を生成
    - ユースケースの実装（ビジネスロジック）
    - リポジトリの実装（必要に応じて）
@@ -740,8 +761,8 @@ const dbUser = await getUserBySub(authUser.sub);
 
 2. **データベース変更**
 
-   - Prismaスキーマの更新（`packages/backend/prisma/schema.prisma`）
-   - マイグレーションファイルの作成（`packages/backend/migrations/`）
+   - Prismaスキーマの更新（`packages/server/prisma/schema.prisma`）
+   - マイグレーションファイルの作成（`packages/server/migrations/`）
    - `pnpm d1:migrations:apply:remote`でリモートにマイグレーション適用
    - `pnpm d1:migrations:apply`でローカルにマイグレーション適用
    - `pnpm prisma generate`でクライアント更新
@@ -774,7 +795,7 @@ Frontend の `wrangler.toml` の重要な設定：
 
 ```toml
 # Cloudflare Workers with Static Assets configuration
-name = "apollo-cloudflare-frontend"
+name = "blog-aws-practice-frontend"
 compatibility_date = "2024-11-25"
 
 # Static Assets（Workerスクリプトなし = 無料配信）
@@ -782,17 +803,63 @@ assets = { directory = "./dist", not_found_handling = "single-page-application" 
 
 # 本番環境設定
 [env.production]
-name = "apollo-cloudflare-frontend-prod"
+name = "blog-aws-practice-frontend-prod"
 ```
 
 - `not_found_handling = "single-page-application"`: SPAのルーティングサポート
 - Workerスクリプト（`main`）の指定なし: 静的アセットのみの無料配信
 
+## AWS移行プロジェクト管理
+
+このプロジェクトは現在、AWS ECS Fargateへの移行作業を進めています。
+
+### 重要なドキュメント
+
+- **[AWS_MIGRATION_PLAN.md](./AWS_MIGRATION_PLAN.md)** - AWS移行の詳細計画書
+- **[AWS_MIGRATION_PROGRESS.md](./AWS_MIGRATION_PROGRESS.md)** - 移行作業の進捗管理
+
+### 作業ルール
+
+**AWS移行に関する作業を行った場合は、必ず `AWS_MIGRATION_PROGRESS.md` を更新してください。**
+
+このルールにより：
+- Claude Codeセッションが切り替わっても作業を継続可能
+- チーム内で進捗状況を共有
+- 作業の重複や漏れを防止
+
+更新すべき内容：
+- 完了した作業を「✅ 完了した作業」セクションに移動
+- 新しく開始した作業を「🚧 進行中の作業」に記載
+- 発生した課題や決定事項を記録
+- 最終更新日時を更新
+
+## AWSコンソール操作に関するルール
+
+**重要**: AWSコンソールの操作説明を行う際は、以下のルールに従ってください：
+
+1. **説明は日本語で行う**
+2. **AWSコンソール上の要素（ボタン、メニュー、設定項目など）は英語版の名称を使用する**
+   - 例: 「左側のメニューから「**Your VPCs**」をクリック」
+   - 例: 「「**Create VPC**」ボタンをクリック」
+   - 例: 「**Name tag**に`blog-aws-practice-vpc`を入力」
+
+このルールにより、英語版AWSコンソールを使用しているユーザーが迷わずに操作できます。
+
 ## 参考リンク
 
+### Cloudflare関連
 - [Cloudflare D1 Docs](https://developers.cloudflare.com/d1/)
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
 - [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
 - [Prisma D1 Adapter](https://www.prisma.io/docs/orm/overview/databases/cloudflare-d1)
 - [Apollo Server Cloudflare](https://www.apollographql.com/docs/apollo-server/deployment/cloudflare-workers)
+
+### AWS関連
+- [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
+- [Aurora PostgreSQL User Guide](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/)
+- [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/)
+- [GitHub Actions for Amazon ECS](https://github.com/aws-actions/amazon-ecs-deploy-task-definition)
+
+### その他
 - [Supabase Auth](https://supabase.com/docs/guides/auth)
+- [Prisma with PostgreSQL](https://www.prisma.io/docs/concepts/database-connectors/postgresql)

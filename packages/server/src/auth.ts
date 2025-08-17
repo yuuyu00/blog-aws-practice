@@ -89,3 +89,4 @@ export function requireRole(
 
   return authenticatedUser;
 }
+

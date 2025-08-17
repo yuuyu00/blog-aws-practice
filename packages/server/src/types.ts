@@ -3,7 +3,6 @@ import type { AuthUser } from './auth';
 import type { Container } from './infrastructure/container';
 
 export interface Env {
-  DB: D1Database;
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   SUPABASE_JWT_SECRET: string;

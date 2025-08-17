@@ -81,3 +81,6 @@ logs
 # Cloudflare
 .wrangler
 .dev.vars
+
+# Docker
+.env.docker

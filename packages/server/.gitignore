@@ -2,6 +2,7 @@ node_modules/
 dist/
 src/generated/
 src/gqlTypes.ts
+src/schema.ts
 *.env*
 .DS_Store
 prisma/*.db
