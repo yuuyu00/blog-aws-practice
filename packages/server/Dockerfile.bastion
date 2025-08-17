@@ -1,0 +1,44 @@
+# 踏み台ECSタスク用Dockerfile
+FROM node:22.11.0-alpine
+
+WORKDIR /app
+
+# 必要なツールをインストール
+RUN apk add --no-cache \
+    postgresql-client \
+    bash \
+    curl \
+    vim \
+    jq
+
+# Install pnpm
+RUN npm install -g pnpm@9.10.0
+
+# Copy workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/server/package.json ./packages/server/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy all server files
+COPY packages/server ./packages/server
+
+# Set working directory
+WORKDIR /app/packages/server
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Install socat for port forwarding
+RUN apk add --no-cache socat
+
+# Port forwarding script
+RUN printf '#!/bin/sh\n\
+RDS_ENDPOINT=$(echo $DATABASE_URL | sed -n "s/.*@\\([^:]*\\):.*/\\1/p")\n\
+echo "Starting port forwarding to RDS: $RDS_ENDPOINT:5432"\n\
+socat TCP-LISTEN:5432,fork,reuseaddr TCP:$RDS_ENDPOINT:5432\n' > /start-forward.sh && \
+    chmod +x /start-forward.sh
+
+# Start port forwarding
+CMD ["/bin/sh", "/start-forward.sh"]

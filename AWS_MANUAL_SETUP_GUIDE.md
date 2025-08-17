@@ -303,9 +303,71 @@
 5. 「**Create load balancer**」をクリック
 6. ALBのDNS名をメモする
 
-## 7. ECSクラスターの作成
+## 7. Secrets Managerの設定
 
-### 7.1 ECSサービスリンクロールの確認
+### 7.1 データベース認証情報の保存
+1. 検索バーに「**Secrets Manager**」と入力し、Secrets Managerへ移動
+2. 「**Store a new secret**」ボタンをクリック
+3. **Secret type**:
+   - 「**Credentials for Amazon RDS database**」を選択
+4. **Credentials**:
+   - **User name**: `postgres`
+   - **Password**: RDS作成時に設定したパスワードを入力
+5. **Database**:
+   - リストから`blog-aws-practice-db`を選択
+6. 「**Next**」をクリック
+7. **Secret name and description**:
+   - **Secret name**: `blog-aws-practice/rds`
+   - **Description**: `RDS PostgreSQL credentials for blog-aws-practice`
+8. 「**Next**」をクリック
+9. **Configure rotation**: スキップ（「**Next**」をクリック）
+10. レビュー画面で確認し、「**Store**」をクリック
+
+### 7.2 Supabase認証情報の保存
+1. 「**Store a new secret**」ボタンをクリック
+2. **Secret type**:
+   - 「**Other type of secret**」を選択
+3. **Key/value pairs**で以下を追加（「**+ Add row**」で行を追加）:
+   - Key: `SUPABASE_URL`, Value: SupabaseプロジェクトのURL
+   - Key: `SUPABASE_ANON_KEY`, Value: SupabaseのAnon Key
+   - Key: `SUPABASE_JWT_SECRET`, Value: SupabaseのJWT Secret
+4. 「**Next**」をクリック
+5. **Secret name and description**:
+   - **Secret name**: `blog-aws-practice/supabase`
+   - **Description**: `Supabase credentials for blog-aws-practice`
+6. 「**Next**」→「**Next**」→「**Store**」
+
+## 8. IAMロールの作成
+
+### 8.1 ECSタスク実行ロールの作成
+1. 検索バーに「**IAM**」と入力し、IAMへ移動
+2. 左側メニューから「**Roles**」をクリック
+3. 「**Create role**」ボタンをクリック
+4. **Select trusted entity**:
+   - 「**AWS service**」を選択
+   - **Use case**で「**Elastic Container Service**」を探す
+   - 「**Elastic Container Service Task**」を選択
+5. 「**Next**」をクリック
+6. **Add permissions**:
+   - ✅ `AmazonECSTaskExecutionRolePolicy`（デフォルトで選択済み）
+   - ✅ `SecretsManagerReadWrite`を検索して追加
+7. 「**Next**」をクリック
+8. **Name, review, and create**:
+   - **Role name**: `blog-aws-practice-ecs-task-execution-role`
+   - **Description**: `ECS task execution role for blog-aws-practice`
+9. 「**Create role**」をクリック
+
+## 9. CloudWatch Logsグループの作成
+
+1. 検索バーに「**CloudWatch**」と入力し、CloudWatchへ移動
+2. 左側メニューから「**Log groups**」をクリック
+3. 「**Create log group**」ボタンをクリック
+4. **Log group name**: `/ecs/blog-aws-practice`
+5. 「**Create**」をクリック
+
+## 10. ECSクラスターの作成
+
+### 10.1 ECSサービスリンクロールの確認
 初めてECSを使用する場合、サービスリンクロールが必要です。エラーが出た場合は以下を実行：
 
 1. IAMコンソールへ移動
@@ -313,7 +375,7 @@
 3. 「**AWS service**」→「**Elastic Container Service**」を選択
 4. そのまま作成を完了
 
-### 7.2 クラスターの作成
+### 10.2 クラスターの作成
 1. 検索バーに「**ECS**」と入力し、Elastic Container Serviceへ移動
 2. 左側メニューから「**Clusters**」をクリック
 3. 「**Create cluster**」ボタンをクリック

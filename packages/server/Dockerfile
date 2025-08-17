@@ -4,10 +4,10 @@ FROM node:22.11.0-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@8.14.0 --activate
+RUN npm install -g pnpm@9.10.0
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
+# Copy workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/server/package.json ./packages/server/
 
 # Install dependencies
@@ -20,8 +20,8 @@ COPY packages/server ./packages/server
 WORKDIR /app/packages/server
 RUN pnpm generate
 
-# Build the application
-RUN pnpm build:docker
+# Build the application - show errors
+RUN pnpm build:docker || (echo "Build failed, showing error details:" && cat tsconfig.json && ls -la src/ && exit 1)
 
 # Runtime stage
 FROM node:22.11.0-alpine
@@ -29,10 +29,10 @@ FROM node:22.11.0-alpine
 WORKDIR /app
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@8.14.0 --activate
+RUN npm install -g pnpm@9.10.0
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
+# Copy workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/server/package.json ./packages/server/
 
 # Install production dependencies only
@@ -42,10 +42,12 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
 COPY --from=builder /app/packages/server/prisma ./packages/server/prisma
 COPY --from=builder /app/packages/server/schema ./packages/server/schema
-COPY --from=builder /app/node_modules/.pnpm/@prisma+client* ./node_modules/.pnpm/
 
 # Set working directory
 WORKDIR /app/packages/server
+
+# Generate Prisma client for production
+RUN npx prisma generate
 
 # Expose port
 EXPOSE 4000

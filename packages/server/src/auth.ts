@@ -1,5 +1,6 @@
-import * as jose from "jose";
 import type { Env } from "./types";
+
+let jose: any;
 
 export interface AuthUser {
   sub: string;
@@ -36,6 +37,11 @@ export async function verifyJWT(
   const token = match[1];
 
   try {
+    // 動的インポートでjoseを読み込む
+    if (!jose) {
+      jose = await import("jose");
+    }
+    
     console.log('Verifying JWT...');
     console.log('JWT Secret exists:', !!env.SUPABASE_JWT_SECRET);
     const secret = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
@@ -53,10 +59,10 @@ export async function verifyJWT(
     };
 
     return user;
-  } catch (error) {
-    if (error instanceof jose.errors.JWTExpired) {
+  } catch (error: any) {
+    if (error?.name === 'JWTExpired') {
       throw new AuthError("Token has expired");
-    } else if (error instanceof jose.errors.JWTInvalid) {
+    } else if (error?.name === 'JWTInvalid') {
       throw new AuthError("Token is invalid");
     } else {
       throw new AuthError("Token verification failed");
