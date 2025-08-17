@@ -40,10 +40,10 @@ export const ArticleDetail = () => {
   const { article } = data;
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-4xl mx-auto py-8 pt-20">
       <Link
-        to="/articles"
-        className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6"
+        to="/"
+        className="inline-flex items-center text-gray-200 hover:text-gray-400 mb-6"
       >
         ← 記事一覧に戻る
       </Link>
@@ -51,7 +51,7 @@ export const ArticleDetail = () => {
       <article className="bg-gray-800 p-8 rounded-lg shadow-md">
         <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
 
-        <div className="text-sm text-gray-600 mb-6">
+        <div className="text-sm text-gray-500 mb-6">
           投稿者: {article.user.name}
         </div>
 
@@ -59,7 +59,7 @@ export const ArticleDetail = () => {
           {article.categories.map((category) => (
             <span
               key={category.id}
-              className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+              className="px-3 py-1 bg-blue-100 text-gray-700 text-sm rounded-full"
             >
               {category.name}
             </span>
