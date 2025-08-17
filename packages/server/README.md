@@ -7,3 +7,6 @@
 5. `resolvers` 以下を編集し、リゾルバーを書く
 6. `yarn dev` でサーバー起動
 7. `localhost:9000` にアクセスしてPlaygroundを開く
+
+## CI/CD Test
+Test: 2025-08-17 21:00
