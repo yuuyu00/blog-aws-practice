@@ -13,7 +13,6 @@
     "codegen-watch": "graphql-codegen --watch",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "deploy:dev": "pnpm run clean && pnpm run generate && tsc && vite build --mode staging && wrangler deploy",
     "deploy:prod": "pnpm run clean && pnpm build && wrangler deploy --env production"
   },
   "dependencies": {

@@ -47,7 +47,9 @@ async function startServer() {
   });
 
   app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN ? 
+      process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()) : 
+      ['http://localhost:3000', 'https://blog-aws-practice-frontend.mrcdsamg63.workers.dev'],
     credentials: true,
   }));
   app.use(express.json());
