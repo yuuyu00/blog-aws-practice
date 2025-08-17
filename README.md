@@ -1,114 +1,110 @@
 # Blog AWS Practice Stack
 
-Cloudflare Workers上で動作するApollo Server、React、Supabase Authを統合したフルスタックアプリケーション
+AWS ECS Fargate + Cloudflare Workers 構成のフルスタックアプリケーション
 
-## 概要
+## プロジェクト概要
 
-このプロジェクトは以下の技術を使用した本番環境対応のアーキテクチャを実装しています。
+AWS学習を目的としたプロジェクト。Cloudflare Workers上で動作していたアプリケーションをAWS ECS Fargateに移行。
 
-- **バックエンド**: Cloudflare Workers上で動作するApollo GraphQL ServerとD1データベース
-- **フロントエンド**: Cloudflare Workers Static Assetsとしてデプロイされた React SPA
-- **認証**: JWT検証によるSupabase Auth
-- **インフラ**: Cloudflareのエッジネットワーク上で完全サーバーレス
+### 構成
 
-## アーキテクチャ
+- **バックエンド**: AWS ECS Fargate
+- **フロントエンド**: Cloudflare Workers Static Assets
+- **プロキシ**: Cloudflare Workers
+- **CI/CD**: GitHub Actions
+- **アーキテクチャ**: クリーンアーキテクチャ
+
+## システムアーキテクチャ
 
 ```
 クライアントブラウザ
     │
     ├─── React SPA (Cloudflare Workers Static Assets)
-    │     ・Apollo Client (GraphQL)
+    │     ・Apollo Client
     │     ・Supabase Auth Client
-    │     ・React Router (SPAルーティング)
+    │     ・React Router
+    │     ・Catalyst UI Kit
     │
-    │ GraphQLリクエスト (JWT付きヘッダー)
+    │ HTTPS GraphQLリクエスト (JWT付き)
     ▼
-Apollo Server (Cloudflare Workers)
+Cloudflare Workers Proxy
+    │ ・HTTPS→HTTP変換
+    │ ・CORSヘッダー付与
     │
-    ├─── GraphQLスキーマ & リゾルバー
-    ├─── Supabase JWT検証
-    └─── Prisma ORM (D1 Adapter)
-    │
-    │ SQLクエリ
+    │ HTTP転送
     ▼
-Cloudflare D1 (SQLite)
-    ・ユーザーデータ
-    ・記事コンテンツ
-    ・カテゴリ管理
+Application Load Balancer (ALB)
+    │ ・パブリックエンドポイント
+    │ ・ヘルスチェック (/health)
+    │
+    │ プライベートサブネット内転送
+    ▼
+ECS Fargate Service
+    │ ・0.25 vCPU, 0.5GB RAM
+    ├─── Apollo Server (Express.js)
+    │     ・GraphQLリゾルバー
+    │     ・Supabase JWT検証
+    │     ・Prisma ORM
+    │
+    │ VPC内通信
+    ▼
+RDS PostgreSQL
+    ・db.t4g.micro
+    ・PostgreSQL 17.4
 
 外部サービス:
-    Supabase Auth
-    ・ユーザー登録/ログイン
-    ・JWTトークン生成
-    ・OAuthプロバイダーサポート
+    ├── Supabase Auth
+    ├── AWS Secrets Manager
+    ├── Amazon ECR
+    └── Cloudflare CDN
 ```
 
 ## 技術スタック
 
-### バックエンド
+### バックエンド (AWS ECS Fargate)
 
-- **ランタイム**: Cloudflare Workers (エッジコンピューティング)
-- **API**: Apollo ServerによるGraphQL
-- **データベース**: Cloudflare D1 (エッジで動作するSQLite)
-- **ORM**: Prisma (D1 Adapter使用)
-- **認証**: Supabase JWT検証
+- Node.js 22 LTS
+- Express.js 4.21
+- Apollo Server 5.0
+- Prisma 6.3
+- PostgreSQL 17.4
 
-### フロントエンド
+### フロントエンド (Cloudflare Workers)
 
-- **フレームワーク**: React 18 (TypeScript)
-- **ビルドツール**: Vite
-- **スタイリング**: Tailwind CSS
-- **GraphQLクライアント**: Apollo Client
-- **ルーティング**: React Router
-- **デプロイ**: Cloudflare Workers Static Assets
+- React 18
+- Vite 6
+- Tailwind CSS v4
+- Apollo Client
+- React Router v7
+
+### インフラ
+
+- Docker
+- ECS Fargate
+- RDS PostgreSQL (db.t4g.micro)
+- Application Load Balancer
+- VPC (10.0.0.0/16)
+- NAT Gateway
+- AWS Secrets Manager
+- Amazon ECR
 
 ### 開発ツール
 
-- **モノレポ管理**: Turborepo + pnpm workspaces
-- **パッケージマネージャー**: pnpm
-- **コード生成**: GraphQL Code Generator
-- **型安全性**: エンドツーエンドのTypeScript
-- **CI/CD**: GitHub Actions
-
-## プロジェクト構成
-
-```
-blog-aws-practice/
-├── packages/
-│   ├── server/                  # Cloudflare Workers上のApollo Server
-│   │   ├── src/
-│   │   │   ├── index.ts        # Workersエントリーポイント
-│   │   │   ├── resolvers/      # GraphQLリゾルバー
-│   │   │   ├── db.ts          # Prismaクライアント設定
-│   │   │   └── auth.ts        # JWT検証
-│   │   ├── schema/            # GraphQLスキーマファイル (.gql)
-│   │   ├── prisma/            # データベーススキーマ
-│   │   ├── migrations/        # D1マイグレーション
-│   │   └── wrangler.toml      # Cloudflare Workers設定
-│   │
-│   └── frontend/              # React SPA
-│       ├── src/
-│       │   ├── components/    # Reactコンポーネント
-│       │   ├── screens/       # ページコンポーネント
-│       │   ├── graphql/       # GraphQLクエリ/ミューテーション
-│       │   └── generated-graphql/ # 自動生成された型
-│       ├── wrangler.toml      # Static Assets設定
-│       └── .env.development   # 開発環境設定
-│
-├── .github/
-│   └── workflows/
-│       └── deploy.yml         # CI/CDパイプライン
-├── turbo.json                 # Turborepo設定
-├── pnpm-workspace.yaml        # pnpmワークスペース設定
-└── README.md                  # このファイル
-```
+- Turborepo
+- pnpm v8.14.0
+- GraphQL Code Generator
+- TypeScript 5.7
+- ESLint
+- Prettier
 
 ## セットアップ
 
 ### 前提条件
 
-- Node.js v22.11.0 (LTS)
-- pnpm v9以上
+- Node.js v22.11.0
+- pnpm v8.14.0
+- Docker Desktop
+- AWS CLI
 - Cloudflareアカウント
 - Supabaseアカウント
 
@@ -117,7 +113,7 @@ blog-aws-practice/
 1. **リポジトリのクローン**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/yuuyu00/blog-aws-practice.git
    cd blog-aws-practice
    ```
 
@@ -129,46 +125,34 @@ blog-aws-practice/
 
 3. **環境変数の設定**
 
-   バックエンド (`packages/server/.dev.vars`):
-
-   ```
+   `packages/server/.env`:
+   ```env
+   DATABASE_URL="postgresql://bloguser:blogpassword@localhost:5432/blogdb"
    SUPABASE_URL=your-supabase-url
    SUPABASE_ANON_KEY=your-supabase-anon-key
    SUPABASE_JWT_SECRET=your-supabase-jwt-secret
-   GRAPHQL_INTROSPECTION=true
    CORS_ORIGIN=http://localhost:3000
+   NODE_ENV=development
+   PORT=4000
    ```
 
-   バックエンド (`packages/server/.env`):
+4. **ローカルデータベースの起動**
 
+   ```bash
+   docker-compose up -d
    ```
-   DATABASE_URL="file:./dev.db"
-   ```
 
-   フロントエンドの環境ファイルはリポジトリに含まれています。
-
-4. **Cloudflare D1データベースの作成**
+5. **データベースマイグレーション**
 
    ```bash
    cd packages/server
-   pnpm wrangler d1 create blog-aws-practice-db
-   ```
-
-   作成されたIDで`wrangler.toml`の`database_id`を更新してください。
-
-5. **データベースマイグレーションの適用**
-
-   ```bash
-   # ローカル環境
-   pnpm d1:migrations:apply
-
-   # リモート環境
-   pnpm d1:migrations:apply:remote
+   pnpm prisma migrate dev
+   pnpm prisma db seed
    ```
 
 6. **コード生成**
+
    ```bash
-   # プロジェクトルートから
    pnpm generate
    ```
 
@@ -177,116 +161,118 @@ blog-aws-practice/
 ### 開発サーバーの起動
 
 ```bash
-# バックエンドとフロントエンドの両方を起動
+# 全サービス起動
 pnpm dev
 
-# バックエンドのみ (http://localhost:8787)
-cd packages/server && pnpm dev
-
-# フロントエンドのみ (http://localhost:3000)
-cd packages/frontend && pnpm dev
+# 個別起動
+cd packages/server && pnpm dev     # http://localhost:4000
+cd packages/frontend && pnpm dev   # http://localhost:3000
 ```
 
-### 開発ワークフロー
+### GraphQL Playground
 
-1. **GraphQLスキーマの変更**
+開発環境: http://localhost:4000/graphql (Apollo Sandbox)
 
-   - `packages/server/schema/`内の`.gql`ファイルを編集
-   - `pnpm generate`を実行して型を更新
-   - `packages/server/src/resolvers/`でリゾルバーを実装
-
-2. **データベーススキーマの変更**
-
-   - `packages/server/prisma/schema.prisma`を更新
-   - マイグレーション作成: `pnpm d1:migrations:create <name>`
-   - ローカルに適用: `pnpm d1:migrations:apply`
-   - Prismaクライアント生成: `pnpm prisma generate`
-
-3. **フロントエンド開発**
-   - `packages/frontend/src/graphql/`でGraphQLクエリを記述
-   - `pnpm generate`を実行して型付きフックを作成
-   - Reactコンポーネントで生成されたフックを使用
-
-### コード品質チェック
+### 開発コマンド
 
 ```bash
+# GraphQLスキーマ変更後
+pnpm generate
+
+# DBスキーマ変更
+cd packages/server
+pnpm prisma migrate dev --name migration_name
+
 # 型チェック
 pnpm type-check
 
-# リンティング
+# リント
 pnpm lint
 
-# コードフォーマット
+# フォーマット
 pnpm format
 
-# ビルド（全チェックを含む）
+# ビルド
 pnpm build
+
+# Prisma Studio
+cd packages/server
+pnpm prisma-studio  # http://localhost:5555
 ```
 
 ## デプロイ
 
+### 自動デプロイ
+
+`develop`ブランチへのプッシュで自動デプロイ：
+
+- Backend → AWS ECS Fargate
+- Frontend → Cloudflare Workers
+- Proxy → Cloudflare Workers
+
 ### 手動デプロイ
 
 ```bash
-# バックエンドのデプロイ
-cd packages/server
-pnpm deploy:dev    # 開発環境
-pnpm deploy:prod   # 本番環境
+# Backend (AWS ECS)
+./scripts/deploy-to-ecr.sh
 
-# フロントエンドのデプロイ
+# Frontend (Cloudflare Workers)
 cd packages/frontend
-pnpm deploy:dev    # 開発環境
-pnpm deploy:prod   # 本番環境
+pnpm deploy:prod
+
+# Proxy (Cloudflare Workers)
+cd packages/proxy
+pnpm deploy:prod
 ```
 
-### 自動デプロイ (GitHub Actions)
+## 運用
 
-GitHub Actionsによる自動デプロイが設定されています。
+### RDS接続
 
-- `develop`ブランチへのプッシュ: 開発環境へデプロイ
-- `main`ブランチへのプッシュ: 本番環境へデプロイ
+```bash
+# 踏み台サーバーのデプロイ
+./scripts/deploy-bastion.sh
 
-必要なGitHub Secrets:
+# RDS接続
+./scripts/connect-bastion.sh
+```
 
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
+### ログ確認
 
-## 主な特徴
+```bash
+# ECSタスクログ
+aws logs tail /ecs/blog-aws-practice --follow
+```
 
-### ゼロコストの静的ホスティング
+## コスト
 
-フロントエンドの静的アセットはWorkerの起動なしにCloudflareのエッジネットワークから直接配信されるため、ホスティングコストが発生しません。
+月額コスト（東京リージョン、24時間稼働）：
 
-### エッジコンピューティング
+| サービス | 仕様 | 月額（USD） |
+|---------|------|------------|
+| ECS Fargate | 0.25 vCPU, 0.5GB RAM | ~$11 |
+| ALB | 基本料金 + データ転送 | ~$20 |
+| RDS PostgreSQL | db.t4g.micro (Free tier) | $0 |
+| NAT Gateway | 1個 | ~$33 |
+| Secrets Manager | 1シークレット | ~$0.40 |
+| ECR | <1GB | ~$0.10 |
+| **合計** | | **約$64.50** |
 
-APIとデータベースの両方がCloudflareのエッジロケーションで実行され、世界中のユーザーに対して低遅延を実現します。
+## エンドポイント
 
-### 完全な型安全性
+- **ALB DNS**: `blog-aws-practice-alb-169089192.ap-northeast-1.elb.amazonaws.com`
+- **Frontend (Production)**: `https://blog-aws-practice-frontend.mrcdsamg63.workers.dev`
+- **Proxy (Production)**: `https://blog-aws-practice-proxy-prod.mrcdsamg63.workers.dev`
+- **ECR URI**: `664660631613.dkr.ecr.ap-northeast-1.amazonaws.com/blog-aws-practice-server`
 
-PrismaとGraphQL Code Generatorにより、データベーススキーマからReactコンポーネントまでエンドツーエンドの型安全性を提供します。
+## ドキュメント
 
-### 効率的な開発環境
+- [CLAUDE.md](./CLAUDE.md) - プロジェクト詳細仕様
+- [AWS_MIGRATION_PLAN.md](./AWS_MIGRATION_PLAN.md) - AWS移行計画
+- [AWS_MIGRATION_PROGRESS.md](./AWS_MIGRATION_PROGRESS.md) - 移行進捗
+- [AWS_MANUAL_SETUP_GUIDE.md](./AWS_MANUAL_SETUP_GUIDE.md) - AWS構築手順
+- [GITHUB_SECRETS_SETUP.md](./docs/GITHUB_SECRETS_SETUP.md) - CI/CD設定
 
-- ホットリロードによる即時反映
-- 自動コード生成による開発効率化
-- Turborepoによる効率的なモノレポ管理
-- 統合されたリンティングと型チェック
+## ライセンス
 
-## パフォーマンス
-
-- **グローバルCDN**: 300以上のエッジロケーションで静的アセットをキャッシュ
-- **エッジコンピューティング**: APIがユーザーの近くで実行
-- **最適化されたバンドル**: コード分割と遅延読み込み
-- **コールドスタートの最小化**: Workersの高速起動
-
-## スケーラビリティ
-
-- **サーバーレスアーキテクチャ**: 自動スケーリングによりトラフィックの増減に対応
-- **エッジデータベース**: D1による一貫したパフォーマンス
-- **静的アセット配信**: フロントエンドの無制限スケーリング
-- **従量課金モデル**: 使用量に応じた柔軟なコスト構造
-
-## トラブルシューティング
-
-一般的な問題と解決方法については[CLAUDE.md](./CLAUDE.md#トラブルシューティング)を参照してください。
-# blog-aws-practice
+MIT License
