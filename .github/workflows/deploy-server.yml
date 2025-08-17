@@ -66,9 +66,9 @@ jobs:
 
           # イメージを新しいタグに更新
           NEW_IMAGE="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
-          CORS_ORIGINS="https://blog-aws-practice-frontend.mrcdsamg63.workers.dev,https://blog-aws-practice-frontend-prod.mrcdsamg63.workers.dev"
+          CORS_ORIGIN="https://blog-aws-practice-frontend.mrcdsamg63.workers.dev"
 
-          jq --arg IMAGE "$NEW_IMAGE" --arg CORS "$CORS_ORIGINS" \
+          jq --arg IMAGE "$NEW_IMAGE" --arg CORS "$CORS_ORIGIN" \
             '.containerDefinitions[0].image = $IMAGE |
              (.containerDefinitions[0].environment[] | select(.name == "CORS_ORIGIN")).value = $CORS |
              del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)' \
