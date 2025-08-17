@@ -44,8 +44,4 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            pnpm --filter @blog-aws-practice/frontend deploy:prod
-          else
-            pnpm --filter @blog-aws-practice/frontend deploy:dev
-          fi
+          pnpm --filter @blog-aws-practice/frontend deploy:prod
