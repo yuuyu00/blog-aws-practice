@@ -3,7 +3,7 @@ name: Deploy Server to AWS ECS
 on:
   push:
     branches:
-      - main
+      - develop  # developブランチへのpushで動作
     paths:
       - 'packages/server/**'
       - '.github/workflows/deploy-server.yml'
@@ -12,7 +12,7 @@ on:
 env:
   AWS_REGION: ap-northeast-1
   ECR_REPOSITORY: blog-aws-practice-server
-  ECS_SERVICE: blog-aws-practice-service
+  ECS_SERVICE: blog-aws-practice-server  # 正しいサービス名に修正
   ECS_CLUSTER: blog-aws-practice-cluster
   ECS_TASK_DEFINITION: blog-aws-practice-task
   CONTAINER_NAME: blog-aws-practice-server
@@ -21,9 +21,6 @@ jobs:
   deploy:
     name: Deploy to ECS
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/server
 
     steps:
       - name: Checkout code
@@ -46,31 +43,30 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          # モノレポのルートからビルド（AMD64アーキテクチャ対応）
+          cd ../..
+          docker build --platform linux/amd64 \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            -f packages/server/Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Download task definition
+      - name: Update ECS service
         run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
-            --query taskDefinition > task-definition.json
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
 
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: packages/server/task-definition.json
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
-
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --region ${{ env.AWS_REGION }}
 
       - name: Verify deployment
         run: |
@@ -78,3 +74,24 @@ jobs:
           echo "Image: ${{ steps.build-image.outputs.image }}"
           echo "Service: ${{ env.ECS_SERVICE }}"
           echo "Cluster: ${{ env.ECS_CLUSTER }}"
+          
+          # サービスステータスの確認
+          aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'services[0].{DesiredCount:desiredCount,RunningCount:runningCount,Status:status}' \
+            --output table
+          
+          # ヘルスチェック
+          echo "Waiting for ALB to register new tasks..."
+          sleep 30
+          
+          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://blog-aws-practice-alb-169089192.ap-northeast-1.elb.amazonaws.com/health || echo "Failed")
+          
+          if [ "$HEALTH_STATUS" = "200" ]; then
+            echo "✅ Health check passed! Application is running."
+          else
+            echo "⚠️ Health check returned: $HEALTH_STATUS"
+            echo "Please verify the deployment manually."
+          fi
