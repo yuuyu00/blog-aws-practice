@@ -113,31 +113,48 @@
   - Prismaマイグレーション完了
   - GraphQLエンドポイントの動作確認
 
+#### フェーズ3: CI/CD構築
+- [x] GitHub Actionsワークフローの作成（.github/workflows/deploy-server.yml）
+- [x] GitHub Secretsの設定
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY  
+- [x] 初回デプロイの実行（GitHub Actions経由）
+- [x] CI/CDパイプラインの動作確認
+
+#### フェーズ4: Frontend更新とテスト
+- [x] Frontend環境変数の更新（ALBのURLに変更）
+- [x] CORS設定の確認と修正
+  - Mixed Content問題の発見
+  - HTTPS/HTTP通信問題の解決
+- [x] エンドツーエンドテスト
+- [x] Cloudflare Workers Proxyの作成
+  - packages/proxy作成（HTTPS→HTTP変換）
+  - ALBへのプロキシ機能実装
+
+#### フェーズ5: Frontend Cloudflareデプロイ
+- [x] Frontend .env.developmentの更新（Proxy URLに変更）
+- [x] Frontend .env.productionの更新（Proxy URLに変更）
+- [x] ServerのCORS設定でCloudflare WorkersのURLを許可
+- [x] Cloudflare Workersへのデプロイ（開発・本番）
+  - blog-aws-practice-frontend
+  - blog-aws-practice-proxy
+- [x] 最終動作確認
+- [x] GitHub Actions ワークフローのpath-based triggersの設定
+  - .github/workflows/deploy.yml: frontendとproxy用
+  - .github/workflows/deploy-server.yml: server用
+
 ### 🚧 進行中の作業
 
-なし
+#### 認証エラーの修正
+- [x] JWT検証エラーの調査
+  - jose ESモジュール互換性問題の発見
+  - jsonwebtokenへの移行
+- [ ] Supabase認証設定の確認
+- [ ] signUp機能の動作確認
 
 ### 📋 未着手の作業
 
-#### フェーズ3: CI/CD構築
-- [ ] GitHub Actionsワークフローの作成（.github/workflows/deploy-server.yml）
-- [ ] GitHub Secretsの設定
-- [ ] 初回デプロイの実行
-
-#### フェーズ4: Frontend更新とテスト
-- [ ] Frontend環境変数の更新（ALBのURLに変更）
-- [ ] CORS設定の確認
-- [ ] エンドツーエンドテスト
-- [ ] パフォーマンステスト
-
-#### フェーズ5: Frontend Cloudflareデプロイ
-- [ ] Frontend .env.developmentの更新（開発用ALBエンドポイント）
-- [ ] Frontend .env.productionの更新（本番用ALBエンドポイント）
-- [ ] ServerのCORS設定でCloudflare WorkersのURLを許可
-- [ ] Cloudflare Workersへのデプロイ（開発）
-- [ ] Cloudflare Workersへのデプロイ（本番）
-- [ ] 最終動作確認
-- [ ] ドキュメントの最終更新
+なし
 
 ## 重要な決定事項
 
@@ -146,6 +163,8 @@
 3. **RDS PostgreSQL**: Free tier利用のためAuroraではなく通常のRDS PostgreSQL（db.t4g.micro）を使用
 4. **ECS構成**: 0.25 vCPU, 0.5GB RAM（最小構成）
 5. **PostgreSQLバージョン**: 17.4-R1（最新版）を使用
+6. **HTTPS/HTTP Mixed Content対策**: Cloudflare Workers Proxyを経由
+7. **JWT検証ライブラリ**: joseからjsonwebtokenに移行（ESM互換性問題解決）
 
 ## 重要な情報
 
@@ -153,16 +172,25 @@
 - **ALB DNS名**: `blog-aws-practice-alb-169089192.ap-northeast-1.elb.amazonaws.com`
 - **RDS エンドポイント**: RDSコンソールで確認が必要
 - **IAMユーザー**: blog-aws-practice-deploy（アクセスキーは安全に保管）
+- **Cloudflare Workers URL**:
+  - Frontend: `https://blog-aws-practice-frontend.mrcdsamg63.workers.dev`
+  - Frontend (prod): `https://blog-aws-practice-frontend-prod.mrcdsamg63.workers.dev`
+  - Proxy: `https://blog-aws-practice-proxy.mrcdsamg63.workers.dev`
+  - Proxy (prod): `https://blog-aws-practice-proxy-prod.mrcdsamg63.workers.dev`
 
 ## 次のアクション
 
-1. GitHub Actionsワークフローの作成
-2. GitHub Secretsの設定
-3. CI/CDパイプラインのテスト
+1. Supabase認証設定の確認（URL Configuration）
+2. signUp機能の動作確認とデバッグ
+3. JWT検証の最終動作確認
 
 ## 課題・懸念事項
 
 - ECSクラスター作成時に一度サービスリンクロールのエラーが発生したが、再試行で解決
+- Mixed Content問題: HTTPS（Cloudflare）からHTTP（ALB）への通信がブロックされる
+  - 解決策: Cloudflare Workers Proxyを作成してHTTPS→HTTPの変換を実施
+- ESモジュール互換性問題: joseライブラリがCommonJS環境で動作しない
+  - 解決策: jsonwebtokenライブラリに移行
 
 ## 参考リンク
 
@@ -172,4 +200,4 @@
 
 ---
 
-最終更新: 2025-08-17 20:35 JST (フェーズ2完全完了 - ECSデプロイ・マイグレーション適用完了)
+最終更新: 2025-08-18 01:00 JST (フェーズ5完了 - Cloudflareデプロイ完了、JWT検証エラー対応中)

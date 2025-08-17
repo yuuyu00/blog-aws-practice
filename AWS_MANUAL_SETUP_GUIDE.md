@@ -384,6 +384,43 @@
    - **Infrastructure**: AWS Fargate (serverless)のみ選択
 5. 「**Create**」をクリック
 
+## 11. GitHub Actionsの設定
+
+### 11.1 GitHub Secretsの設定
+1. GitHubリポジトリの「**Settings**」タブへ移動
+2. 左メニューから「**Secrets and variables**」→「**Actions**」をクリック
+3. 「**New repository secret**」ボタンをクリックして以下を追加：
+
+   **AWS認証情報**:
+   - Name: `AWS_ACCESS_KEY_ID`
+   - Secret: IAMユーザーのアクセスキーID
+   
+   - Name: `AWS_SECRET_ACCESS_KEY`
+   - Secret: IAMユーザーのシークレットアクセスキー
+
+   **Cloudflare認証情報**:
+   - Name: `CLOUDFLARE_API_TOKEN`
+   - Secret: Cloudflare API Token（Workers Scripts:Edit権限）
+   
+   - Name: `CLOUDFLARE_ACCOUNT_ID`
+   - Secret: CloudflareアカウントID
+
+### 11.2 GitHub Actionsワークフローの確認
+プロジェクトには以下のワークフローが設定済み：
+- `.github/workflows/deploy-server.yml`: ECSへのサーバーデプロイ
+- `.github/workflows/deploy.yml`: Cloudflare Workersへのフロントエンドデプロイ
+
+## 12. Cloudflare Workers Proxyの設定
+
+### 12.1 プロキシの必要性
+- CloudflareのHTTPSからALBのHTTPへの通信がMixed Contentでブロックされる
+- 解決策: Cloudflare Workers Proxyを経由してHTTPS→HTTP変換
+
+### 12.2 プロキシの構成
+- `packages/proxy`: ALBへのリクエストをプロキシ
+- ALBエンドポイント: `http://blog-aws-practice-alb-169089192.ap-northeast-1.elb.amazonaws.com`
+- CORSヘッダーを自動付与
+
 ## 作成したリソースの確認
 
 以下のリソースが作成されていることを確認してください：
@@ -420,15 +457,42 @@
 - **RDS エンドポイント**: `blog-aws-practice-db.[ランダム文字列].ap-northeast-1.rds.amazonaws.com`
 - **RDS パスワード**: （設定したパスワード）
 
-## 次のステップ
+## デプロイ手順
 
-このインフラ構築が完了したら、以下の作業を行います：
+### Dockerイメージのビルドとプッシュ
 
-1. ローカル環境でDockerイメージをビルド
-2. ECRにDockerイメージをプッシュ
-3. ECSタスク定義を作成
-4. ECSサービスをデプロイ
-5. GitHub Actionsを設定してCI/CDパイプラインを構築
+```bash
+# AWS CLIの認証
+aws configure --profile blog-aws-practice
+
+# ECRログイン
+aws ecr get-login-password --region ap-northeast-1 --profile blog-aws-practice | \
+  docker login --username AWS --password-stdin 664660631613.dkr.ecr.ap-northeast-1.amazonaws.com
+
+# Dockerイメージのビルド（AMD64アーキテクチャ）
+cd /path/to/blog-aws-practice
+docker build --platform linux/amd64 -t blog-aws-practice-server -f packages/server/Dockerfile .
+
+# タグ付け
+docker tag blog-aws-practice-server:latest \
+  664660631613.dkr.ecr.ap-northeast-1.amazonaws.com/blog-aws-practice-server:latest
+
+# プッシュ
+docker push 664660631613.dkr.ecr.ap-northeast-1.amazonaws.com/blog-aws-practice-server:latest
+```
+
+### ECSタスク定義の作成
+1. ECSコンソールで「**Task definitions**」→「**Create new task definition**」
+2. Fargate互換の設定で作成
+3. Secrets Managerとの統合を設定
+
+### ECSサービスのデプロイ
+1. ECSクラスターで「**Services**」→「**Create**」
+2. 作成したタスク定義を選択
+3. ALBのターゲットグループと連携
+
+### CI/CDパイプライン
+GitHub Actionsが設定済みのため、`develop`ブランチへのプッシュで自動デプロイされます。
 
 ## トラブルシューティング
 
@@ -447,3 +511,20 @@
 - ターゲットグループのヘルスチェックパスが`/health`になっているか確認
 - ECSタスクが正しく起動しているか確認
 - セキュリティグループの設定を確認
+
+### Mixed Content エラー
+- HTTPS（Cloudflare）からHTTP（ALB）への通信がブロックされる
+- 解決策: Cloudflare Workers Proxyを使用してHTTPS→HTTP変換
+
+### JWT検証エラー
+- Secrets Managerに正しいSupabase JWT Secretが設定されているか確認
+- ECSタスク実行ロールにSecretsManagerReadWrite権限があるか確認
+- 環境変数が正しくタスクに渡されているか確認
+
+### Cloudflare API Token作成
+1. Cloudflareダッシュボード→My Profile→API Tokens
+2. Create Token→Custom token
+3. 必要な権限:
+   - Account - Workers Scripts:Edit
+   - Account - Account Settings:Read
+4. GitHub Secretsに`CLOUDFLARE_API_TOKEN`として設定
