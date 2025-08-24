@@ -4,7 +4,7 @@ export default {
 
     // ALBのエンドポイント
     const ALB_ENDPOINT =
-      "http://blog-aws-practice-alb-169089192.ap-northeast-1.elb.amazonaws.com";
+      "http://blog-aws-practice-alb-1004006342.ap-northeast-1.elb.amazonaws.com";
 
     // GraphQLエンドポイントへのプロキシ
     const targetUrl = `${ALB_ENDPOINT}${url.pathname}${url.search}`;
