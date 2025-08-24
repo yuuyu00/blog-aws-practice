@@ -317,7 +317,7 @@ resource "aws_db_instance" "main" {
   
   db_name  = "blog_aws_practice"
   username = "postgres"
-  password = "CHANGE_ME_IN_PRODUCTION"
+  password = "postgres"
   
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
@@ -340,5 +340,313 @@ resource "aws_db_instance" "main" {
   
   lifecycle {
     ignore_changes = [password]
+  }
+}
+
+# IAM Roles for ECS
+data "aws_iam_policy_document" "ecs_task_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ecs_task_execution" {
+  name               = "blog-aws-practice-ecs-task-execution-role"
+  description        = "Allows ECS tasks to call AWS services on your behalf."
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
+
+  tags = {}
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_secrets" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+}
+
+resource "aws_iam_role" "ecs_task" {
+  name               = "blog-aws-practice-ecs-task-role"
+  description        = "Allows ECS tasks to call AWS services on your behalf."
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
+
+  tags = {}
+}
+
+resource "aws_iam_policy" "ecs_exec" {
+  name        = "blog-aws-practice-ecs-exec-policy"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:DescribeLogGroups",
+          "logs:CreateLogStream",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_exec_policy" {
+  role       = aws_iam_role.ecs_task.name
+  policy_arn = "arn:aws:iam::664660631613:policy/blog-aws-practice-ecs-exec-policy"
+}
+
+# ECR Repositories
+resource "aws_ecr_repository" "server" {
+  name                 = "blog-aws-practice-server"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  tags = {}
+}
+
+resource "aws_ecr_repository" "bastion" {
+  name                 = "blog-aws-practice-bastion"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  tags = {}
+}
+
+# CloudWatch Log Groups
+resource "aws_cloudwatch_log_group" "ecs_server" {
+  name              = "/ecs/blog-aws-practice"
+  retention_in_days = 0
+
+  tags = {}
+}
+
+resource "aws_cloudwatch_log_group" "ecs_bastion" {
+  name              = "/ecs/blog-aws-practice-bastion"
+  retention_in_days = 0
+
+  tags = {}
+}
+
+# Secrets Manager
+resource "aws_secretsmanager_secret" "rds" {
+  name                    = "blog-aws-practice/rds"
+  description             = "RDS PostgreSQL credentials for blog-aws-practice"
+  recovery_window_in_days = 0
+  
+  tags = {}
+}
+
+resource "aws_secretsmanager_secret" "supabase" {
+  name                    = "blog-aws-practice/supabase"
+  recovery_window_in_days = 0
+  
+  tags = {}
+}
+
+resource "aws_secretsmanager_secret" "database_url" {
+  name                    = "blog-aws-practice/database-url"
+  description             = "PostgreSQL connection string for ECS"
+  recovery_window_in_days = 0
+  
+  tags = {}
+}
+
+# ECS Task Definitions
+resource "aws_ecs_task_definition" "server" {
+  family                   = "blog-aws-practice-task"
+  network_mode            = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                     = "256"
+  memory                  = "512"
+  execution_role_arn      = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([{
+    name  = "blog-aws-practice-server"
+    image = "${aws_ecr_repository.server.repository_url}:630020484c0400595ceb769482c7fe5f64bfba63"
+    
+    portMappings = [{
+      containerPort = 4000
+      hostPort      = 4000
+      protocol      = "tcp"
+    }]
+    
+    environment = [
+      { name = "NODE_ENV", value = "production" },
+      { name = "PORT", value = "4000" },
+      { name = "GRAPHQL_INTROSPECTION", value = "false" },
+      { name = "CORS_ORIGIN", value = "https://blog-aws-practice-frontend.mrcdsamg63.workers.dev" },
+      { name = "GRAPHQL_PLAYGROUND", value = "false" }
+    ]
+    
+    secrets = [
+      {
+        name      = "DATABASE_URL"
+        valueFrom = "arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/database-url:DATABASE_URL::"
+      },
+      {
+        name      = "SUPABASE_URL"
+        valueFrom = "arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/supabase:SUPABASE_URL::"
+      },
+      {
+        name      = "SUPABASE_ANON_KEY"
+        valueFrom = "arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/supabase:SUPABASE_ANON_KEY::"
+      },
+      {
+        name      = "SUPABASE_JWT_SECRET"
+        valueFrom = "arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/supabase:SUPABASE_JWT_SECRET::"
+      }
+    ]
+    
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://localhost:4000/health || exit 1"]
+      interval    = 30
+      retries     = 3
+      startPeriod = 60
+      timeout     = 5
+    }
+    
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.ecs_server.name
+        "awslogs-region"        = "ap-northeast-1"
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+    
+    essential = true
+    mountPoints = []
+    volumesFrom = []
+    systemControls = []
+  }])
+  
+  tags = {}
+}
+
+resource "aws_ecs_task_definition" "bastion" {
+  family                   = "blog-aws-practice-bastion-task"
+  network_mode            = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                     = "256"
+  memory                  = "512"
+  execution_role_arn      = aws_iam_role.ecs_task_execution.arn
+  task_role_arn           = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name  = "bastion"
+    image = "${aws_ecr_repository.bastion.repository_url}:latest"
+    
+    secrets = [{
+      name      = "DATABASE_URL"
+      valueFrom = "arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/database-url:DATABASE_URL::"
+    }]
+    
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.ecs_bastion.name
+        "awslogs-region"        = "ap-northeast-1"
+        "awslogs-stream-prefix" = "bastion"
+      }
+    }
+    
+    essential = true
+    environment = []
+    mountPoints = []
+    portMappings = []
+    volumesFrom = []
+    systemControls = []
+  }])
+  
+  tags = {}
+}
+
+# ECS Services
+resource "aws_ecs_service" "server" {
+  name                    = "blog-aws-practice-server"
+  cluster                 = aws_ecs_cluster.main.id
+  task_definition         = aws_ecs_task_definition.server.arn
+  desired_count           = 1
+  launch_type             = "FARGATE"
+  enable_ecs_managed_tags = true
+
+  network_configuration {
+    subnets          = [aws_subnet.private_1a.id, aws_subnet.private_1c.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = "blog-aws-practice-server"
+    container_port   = 4000
+  }
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  depends_on = [aws_lb_listener.http]
+  
+  tags = {}
+  
+  lifecycle {
+    ignore_changes = [task_definition, availability_zone_rebalancing]
+  }
+}
+
+resource "aws_ecs_service" "bastion" {
+  name                   = "blog-aws-practice-bastion"
+  cluster                = aws_ecs_cluster.main.id
+  task_definition        = aws_ecs_task_definition.bastion.arn
+  desired_count          = 0
+  launch_type            = "FARGATE"
+  enable_execute_command = true
+
+  network_configuration {
+    subnets          = [aws_subnet.private_1a.id, aws_subnet.private_1c.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = false
+  }
+  
+  tags = {}
+  
+  lifecycle {
+    ignore_changes = [task_definition]
   }
 }

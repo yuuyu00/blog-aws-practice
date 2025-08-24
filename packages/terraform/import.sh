@@ -106,4 +106,45 @@ fi
 echo "Importing RDS Instance..."
 terraform import aws_db_instance.main blog-aws-practice-db
 
+# IAM Roles
+echo "Importing IAM Roles..."
+terraform import aws_iam_role.ecs_task_execution blog-aws-practice-ecs-task-execution-role
+terraform import aws_iam_role.ecs_task blog-aws-practice-ecs-task-role
+
+# IAM Policy
+echo "Importing IAM Policy..."
+terraform import aws_iam_policy.ecs_exec arn:aws:iam::664660631613:policy/blog-aws-practice-ecs-exec-policy
+
+# IAM Role Policy Attachments
+echo "Importing IAM Role Policy Attachments..."
+terraform import aws_iam_role_policy_attachment.ecs_task_execution_policy blog-aws-practice-ecs-task-execution-role/arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+terraform import aws_iam_role_policy_attachment.ecs_task_execution_secrets blog-aws-practice-ecs-task-execution-role/arn:aws:iam::aws:policy/SecretsManagerReadWrite
+terraform import aws_iam_role_policy_attachment.ecs_task_exec_policy blog-aws-practice-ecs-task-role/arn:aws:iam::664660631613:policy/blog-aws-practice-ecs-exec-policy
+
+# ECR Repositories
+echo "Importing ECR Repositories..."
+terraform import aws_ecr_repository.server blog-aws-practice-server
+terraform import aws_ecr_repository.bastion blog-aws-practice-bastion
+
+# CloudWatch Log Groups
+echo "Importing CloudWatch Log Groups..."
+terraform import aws_cloudwatch_log_group.ecs_server /ecs/blog-aws-practice
+terraform import aws_cloudwatch_log_group.ecs_bastion /ecs/blog-aws-practice-bastion
+
+# Secrets Manager Secrets
+echo "Importing Secrets Manager Secrets..."
+terraform import aws_secretsmanager_secret.rds arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/rds-Eyz7pO
+terraform import aws_secretsmanager_secret.supabase arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/supabase-ArC7gI
+terraform import aws_secretsmanager_secret.database_url arn:aws:secretsmanager:ap-northeast-1:664660631613:secret:blog-aws-practice/database-url-ShgAne
+
+# ECS Task Definitions (latest revision)
+echo "Importing ECS Task Definitions..."
+terraform import aws_ecs_task_definition.server blog-aws-practice-task:10
+terraform import aws_ecs_task_definition.bastion blog-aws-practice-bastion-task:6
+
+# ECS Services
+echo "Importing ECS Services..."
+terraform import aws_ecs_service.server blog-aws-practice-cluster/blog-aws-practice-server
+terraform import aws_ecs_service.bastion blog-aws-practice-cluster/blog-aws-practice-bastion
+
 echo "Import complete! Run 'terraform plan' to verify the state."
