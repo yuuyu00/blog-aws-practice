@@ -46,12 +46,16 @@ blog-aws-practice/
 │   │   ├── wrangler.toml        # Wrangler v4設定
 │   │   ├── .dev.vars           # ローカル開発用環境変数
 │   │   └── .env                # Prisma CLI用設定
-│   └── frontend/                # React + Vite (Cloudflare Workers Static Assets)
-│       ├── src/
-│       ├── wrangler.toml        # Workers設定
-│       ├── .env                # ローカル開発用
-│       ├── .env.development     # 開発環境デプロイ用
-│       └── .env.production      # 本番環境デプロイ用
+│   ├── frontend/                # React + Vite (Cloudflare Workers Static Assets)
+│   │   ├── src/
+│   │   ├── wrangler.toml        # Workers設定
+│   │   ├── .env                # ローカル開発用
+│   │   ├── .env.development     # 開発環境デプロイ用
+│   │   └── .env.production      # 本番環境デプロイ用
+│   └── terraform/               # AWS Infrastructure as Code
+│       ├── main.tf              # Terraform設定
+│       ├── import.sh            # 既存リソースインポートスクリプト
+│       └── .gitignore           # Terraform state除外
 ├── turbo.json                   # Turborepo設定
 ├── pnpm-workspace.yaml          # pnpm workspaces設定
 ├── .npmrc                       # pnpm設定
@@ -808,6 +812,42 @@ name = "blog-aws-practice-frontend-prod"
 
 - `not_found_handling = "single-page-application"`: SPAのルーティングサポート
 - Workerスクリプト（`main`）の指定なし: 静的アセットのみの無料配信
+
+## AWSインフラストラクチャ管理
+
+### Terraform
+
+AWSインフラストラクチャは`packages/terraform`でコードとして管理されています。
+
+```bash
+cd packages/terraform
+
+# 初期化
+terraform init
+
+# 実行計画確認
+terraform plan
+
+# インフラ構築
+terraform apply
+
+# インフラ削除
+terraform destroy
+
+# 既存リソースのインポート
+./import.sh
+```
+
+管理対象リソース：
+- VPC、Subnets、Internet Gateway、NAT Gateway、Route Tables、Route Table Associations
+- Security Groups (ALB、ECS、RDS)
+- Application Load Balancer、Target Group、Listener
+- ECS Cluster、Task Definitions、Services
+- ECR Repositories
+- RDS Instance、DB Subnet Group
+- IAM Roles、Policies、Policy Attachments
+- CloudWatch Log Groups
+- Secrets Manager（シークレット自体は作成、値は手動設定）
 
 ## AWS移行プロジェクト管理
 

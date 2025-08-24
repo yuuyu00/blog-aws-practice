@@ -87,6 +87,7 @@ RDS PostgreSQL
 - NAT Gateway
 - AWS Secrets Manager
 - Amazon ECR
+- Terraform v1.0+
 
 ### 開発ツール
 
@@ -126,6 +127,7 @@ RDS PostgreSQL
 3. **環境変数の設定**
 
    `packages/server/.env`:
+
    ```env
    DATABASE_URL="postgresql://bloguser:blogpassword@localhost:5432/blogdb"
    SUPABASE_URL=your-supabase-url
@@ -200,6 +202,24 @@ cd packages/server
 pnpm prisma-studio  # http://localhost:5555
 ```
 
+## インフラストラクチャ管理
+
+### Terraform
+
+AWSインフラストラクチャは`packages/terraform`でTerraformコードとして管理。
+
+管理対象リソース：
+
+- VPC、Subnets、Internet Gateway、NAT Gateway、Route Tables
+- Security Groups (ALB、ECS、RDS)
+- Application Load Balancer、Target Group、Listener
+- ECS Cluster、Task Definitions、Services
+- ECR Repositories
+- RDS Instance、DB Subnet Group
+- IAM Roles、Policies
+- CloudWatch Log Groups
+- Secrets Manager（シークレット値は手動管理）
+
 ## デプロイ
 
 ### 自動デプロイ
@@ -248,15 +268,15 @@ aws logs tail /ecs/blog-aws-practice --follow
 
 月額コスト（東京リージョン、24時間稼働）：
 
-| サービス | 仕様 | 月額（USD） |
-|---------|------|------------|
-| ECS Fargate | 0.25 vCPU, 0.5GB RAM | ~$11 |
-| ALB | 基本料金 + データ転送 | ~$20 |
-| RDS PostgreSQL | db.t4g.micro (Free tier) | $0 |
-| NAT Gateway | 1個 | ~$33 |
-| Secrets Manager | 1シークレット | ~$0.40 |
-| ECR | <1GB | ~$0.10 |
-| **合計** | | **約$64.50** |
+| サービス        | 仕様                     | 月額（USD）  |
+| --------------- | ------------------------ | ------------ |
+| ECS Fargate     | 0.25 vCPU, 0.5GB RAM     | ~$11         |
+| ALB             | 基本料金 + データ転送    | ~$20         |
+| RDS PostgreSQL  | db.t4g.micro (Free tier) | $0           |
+| NAT Gateway     | 1個                      | ~$33         |
+| Secrets Manager | 1シークレット            | ~$0.40       |
+| ECR             | <1GB                     | ~$0.10       |
+| **合計**        |                          | **約$64.50** |
 
 ## エンドポイント
 
